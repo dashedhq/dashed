@@ -1,11 +1,11 @@
 import {
   type Color,
-  type Document,
-  type Node,
-  type Page,
   createFrame,
   createScreen,
   createText,
+  type Document,
+  type Node,
+  type Page,
 } from "@dashedhq/core";
 
 // -- Zinc palette (shadcn/ui) --

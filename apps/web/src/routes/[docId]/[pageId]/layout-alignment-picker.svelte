@@ -1,4 +1,9 @@
 <script lang="ts">
+  import type {
+    Layout,
+    StackAlignment,
+    StackDistribution,
+  } from "@dashedhq/core";
   import {
     AlignCenterHorizontalIcon,
     AlignCenterVerticalIcon,
@@ -8,11 +13,6 @@
     AlignStartVerticalIcon,
     DotIcon,
   } from "@lucide/svelte";
-  import type {
-    Layout,
-    StackAlignment,
-    StackDistribution,
-  } from "@dashedhq/core";
   import { ToggleGroup } from "bits-ui";
 
   import { cn } from "$lib/utils";

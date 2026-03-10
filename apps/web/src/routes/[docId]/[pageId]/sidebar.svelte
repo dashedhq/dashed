@@ -1,11 +1,11 @@
 <script lang="ts">
-  import { FrameIcon, SmartphoneIcon, TypeIcon } from "@lucide/svelte";
   import {
     type Document,
     type Node,
     type Page,
     resolveChildren,
   } from "@dashedhq/core";
+  import { FrameIcon, SmartphoneIcon, TypeIcon } from "@lucide/svelte";
 
   import { resolve } from "$app/paths";
   import {

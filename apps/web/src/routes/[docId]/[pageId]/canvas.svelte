@@ -3,10 +3,10 @@
     type Node,
     nodeStyle,
     type Page,
+    paragraphStyle,
     resolveChildren,
     screenStyle,
     type TextNode,
-    paragraphStyle,
     textRunStyle,
   } from "@dashedhq/core";
   import type { EditorState } from "prosemirror-state";

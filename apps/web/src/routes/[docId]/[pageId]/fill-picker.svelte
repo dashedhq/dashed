@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { type Fill, fillStyle, colorToHex } from "@dashedhq/core";
+  import { colorToHex, type Fill, fillStyle } from "@dashedhq/core";
   import { Popover } from "bits-ui";
 
   import {

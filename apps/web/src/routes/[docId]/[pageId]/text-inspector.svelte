@@ -1,5 +1,12 @@
 <script lang="ts">
   import {
+    applyUniformTextStyle,
+    type Color,
+    type ResolvedTextStyle,
+    type TextNode,
+    type TextStyle,
+  } from "@dashedhq/core";
+  import {
     CaseSensitiveIcon,
     MoveVerticalIcon,
     TextAlignCenterIcon,
@@ -7,13 +14,6 @@
     TextAlignStartIcon,
     TypeIcon,
   } from "@lucide/svelte";
-  import {
-    applyUniformTextStyle,
-    type Color,
-    type ResolvedTextStyle,
-    type TextNode,
-    type TextStyle,
-  } from "@dashedhq/core";
   import { ToggleGroup } from "bits-ui";
   import type { EditorState } from "prosemirror-state";
   import type { EditorView } from "prosemirror-view";

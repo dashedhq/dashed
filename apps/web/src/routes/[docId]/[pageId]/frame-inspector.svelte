@@ -1,4 +1,5 @@
 <script lang="ts">
+  import type { FrameNode } from "@dashedhq/core";
   import {
     BetweenHorizontalStartIcon,
     EyeIcon,
@@ -9,7 +10,6 @@
     SquareDashedTopSolidIcon,
     SquareRoundCornerIcon,
   } from "@lucide/svelte";
-  import type { FrameNode } from "@dashedhq/core";
 
   import BorderStylePicker from "./border-style-picker.svelte";
   import ColorInput from "./color-input.svelte";

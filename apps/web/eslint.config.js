@@ -1,7 +1,7 @@
 import path from "node:path";
 
-import { includeIgnoreFile } from "@eslint/compat";
 import base from "@dashedhq/eslint-config/base";
+import { includeIgnoreFile } from "@eslint/compat";
 import { defineConfig } from "eslint/config";
 import svelte from "eslint-plugin-svelte";
 import ts from "typescript-eslint";

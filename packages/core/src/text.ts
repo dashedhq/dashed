@@ -334,7 +334,10 @@ export function resolveTextRunStyle(
       result.fontFamily = "mixed";
     if (result.fontWeight !== "mixed" && result.fontWeight !== eff.fontWeight)
       result.fontWeight = "mixed";
-    if (result.letterSpacing !== "mixed" && result.letterSpacing !== eff.letterSpacing)
+    if (
+      result.letterSpacing !== "mixed" &&
+      result.letterSpacing !== eff.letterSpacing
+    )
       result.letterSpacing = "mixed";
     if (result.color !== "mixed" && !colorEquals(result.color, eff.color))
       result.color = "mixed";
@@ -363,9 +366,15 @@ export function resolveParagraphStyle(
   for (let i = 1; i < styles.length; i++) {
     const s = styles[i];
 
-    if (result.textAlign !== "mixed" && result.textAlign !== (s.textAlign ?? defaults.textAlign))
+    if (
+      result.textAlign !== "mixed" &&
+      result.textAlign !== (s.textAlign ?? defaults.textAlign)
+    )
       result.textAlign = "mixed";
-    if (result.lineHeight !== "mixed" && result.lineHeight !== (s.lineHeight ?? defaults.lineHeight))
+    if (
+      result.lineHeight !== "mixed" &&
+      result.lineHeight !== (s.lineHeight ?? defaults.lineHeight)
+    )
       result.lineHeight = "mixed";
   }
 
