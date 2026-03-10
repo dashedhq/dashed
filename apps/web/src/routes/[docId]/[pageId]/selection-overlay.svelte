@@ -68,12 +68,28 @@
 
   let resizeHandle = $state<ResizeHandle | null>(null);
 
+  function resizesRight(h: ResizeHandle): boolean {
+    return h === "right" || h === "top-right" || h === "bottom-right";
+  }
+
+  function resizesLeft(h: ResizeHandle): boolean {
+    return h === "left" || h === "top-left" || h === "bottom-left";
+  }
+
+  function resizesBottom(h: ResizeHandle): boolean {
+    return h === "bottom" || h === "bottom-left" || h === "bottom-right";
+  }
+
+  function resizesTop(h: ResizeHandle): boolean {
+    return h === "top" || h === "top-left" || h === "top-right";
+  }
+
   function resizesX(h: ResizeHandle): boolean {
-    return h.includes("left") || h.includes("right");
+    return resizesLeft(h) || resizesRight(h);
   }
 
   function resizesY(h: ResizeHandle): boolean {
-    return h.includes("top") || h.includes("bottom");
+    return resizesTop(h) || resizesBottom(h);
   }
 
   function startResize(
@@ -118,26 +134,20 @@
     const dx = e.movementX / zoom;
     const dy = e.movementY / zoom;
 
-    if (
-      resizeHandle.includes("right") &&
-      node.dimensions.width.type === "fixed"
-    ) {
+    if (resizesRight(resizeHandle) && node.dimensions.width.type === "fixed") {
       node.dimensions.width.value = Math.max(
         1,
         node.dimensions.width.value + dx,
       );
     }
-    if (
-      resizeHandle.includes("left") &&
-      node.dimensions.width.type === "fixed"
-    ) {
+    if (resizesLeft(resizeHandle) && node.dimensions.width.type === "fixed") {
       node.dimensions.width.value = Math.max(
         1,
         node.dimensions.width.value - dx,
       );
     }
     if (
-      resizeHandle.includes("bottom") &&
+      resizesBottom(resizeHandle) &&
       node.dimensions.height.type === "fixed"
     ) {
       node.dimensions.height.value = Math.max(
@@ -145,10 +155,7 @@
         node.dimensions.height.value + dy,
       );
     }
-    if (
-      resizeHandle.includes("top") &&
-      node.dimensions.height.type === "fixed"
-    ) {
+    if (resizesTop(resizeHandle) && node.dimensions.height.type === "fixed") {
       node.dimensions.height.value = Math.max(
         1,
         node.dimensions.height.value - dy,
@@ -228,7 +235,7 @@
       { handle: "bottom-left", x: s.x, y: s.y + s.h },
       { handle: "bottom-right", x: s.x + s.w, y: s.y + s.h },
     ]}
-    {#each corners as corner}
+    {#each corners as corner (corner.handle)}
       <!-- svelte-ignore a11y_no_static_element_interactions -->
       <div
         class="absolute z-30 bg-white border-2 border-blue-500"
