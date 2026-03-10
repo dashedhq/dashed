@@ -49,7 +49,7 @@ export {
   paragraphStyle,
   textStyle,
   createText,
-  setTextNodeStyle,
+  applyUniformTextStyle,
   normalizeTextNode,
   resolveTextRunStyle,
   resolveParagraphStyle,

@@ -1,6 +1,7 @@
 import { describe, expect, test } from "vitest";
 
 import {
+  applyUniformTextStyle,
   createText,
   hasParagraphStyleOverrides,
   hasTextRunStyleOverrides,
@@ -293,6 +294,89 @@ describe("resolveParagraphStyle", () => {
     const result = resolveParagraphStyle([{}, {}], defaults);
     expect(result.textAlign).toBe("start");
     expect(result.lineHeight).toBe(1.5);
+  });
+});
+
+describe("applyUniformTextStyle", () => {
+  function makeNode(
+    overrides: Partial<TextNode> & { content: TextNode["content"] },
+  ): TextNode {
+    return {
+      ...createText({ id: "t1", content: [{ content: [{ text: "x" }] }] }),
+      ...overrides,
+    };
+  }
+
+  test("sets the node-level default", () => {
+    const node = makeNode({
+      content: [{ content: [{ text: "hello" }] }],
+    });
+    const result = applyUniformTextStyle(node, { fontSize: 24 });
+    expect(result.fontSize).toBe(24);
+  });
+
+  test("strips run overrides for the changed property", () => {
+    const node = makeNode({
+      content: [{ content: [{ text: "hello", fontSize: 14 }] }],
+    });
+    const result = applyUniformTextStyle(node, { fontSize: 24 });
+    expect(result.content[0].content[0].fontSize).toBeUndefined();
+  });
+
+  test("preserves run overrides for unchanged properties", () => {
+    const node = makeNode({
+      content: [
+        { content: [{ text: "hello", fontSize: 14, fontWeight: 700 }] },
+      ],
+    });
+    const result = applyUniformTextStyle(node, { fontSize: 24 });
+    expect(result.content[0].content[0].fontWeight).toBe(700);
+    expect(result.content[0].content[0].fontSize).toBeUndefined();
+  });
+
+  test("strips paragraph overrides for changed paragraph property", () => {
+    const node = makeNode({
+      content: [{ textAlign: "center", content: [{ text: "hello" }] }],
+    });
+    const result = applyUniformTextStyle(node, { textAlign: "end" });
+    expect(result.textAlign).toBe("end");
+    expect(result.content[0].textAlign).toBeUndefined();
+  });
+
+  test("preserves paragraph overrides for unchanged properties", () => {
+    const node = makeNode({
+      content: [
+        { textAlign: "center", lineHeight: 2, content: [{ text: "hello" }] },
+      ],
+    });
+    const result = applyUniformTextStyle(node, { textAlign: "end" });
+    expect(result.content[0].lineHeight).toBe(2);
+    expect(result.content[0].textAlign).toBeUndefined();
+  });
+
+  test("strips color overrides from all runs across paragraphs", () => {
+    const red = { r: 255, g: 0, b: 0, a: 1 };
+    const blue = { r: 0, g: 0, b: 255, a: 1 };
+    const node = makeNode({
+      content: [
+        { content: [{ text: "hello", color: red }] },
+        { content: [{ text: "world", color: blue }] },
+      ],
+    });
+    const green = { r: 0, g: 255, b: 0, a: 1 };
+    const result = applyUniformTextStyle(node, { color: green });
+    expect(result.color).toEqual(green);
+    expect(result.content[0].content[0].color).toBeUndefined();
+    expect(result.content[1].content[0].color).toBeUndefined();
+  });
+
+  test("does not mutate the original node", () => {
+    const node = makeNode({
+      content: [{ content: [{ text: "hello", fontSize: 14 }] }],
+    });
+    applyUniformTextStyle(node, { fontSize: 24 });
+    expect(node.fontSize).toBe(16);
+    expect(node.content[0].content[0].fontSize).toBe(14);
   });
 });
 

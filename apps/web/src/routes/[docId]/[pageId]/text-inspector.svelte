@@ -8,7 +8,7 @@
     TypeIcon,
   } from "@lucide/svelte";
   import {
-    setTextNodeStyle,
+    applyUniformTextStyle,
     type Color,
     type ResolvedTextStyle,
     type TextNode,
@@ -52,7 +52,7 @@
       return;
     }
 
-    node = setTextNodeStyle(node, style);
+    node = applyUniformTextStyle(node, style);
   }
 </script>
 

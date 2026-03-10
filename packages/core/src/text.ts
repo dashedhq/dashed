@@ -57,7 +57,7 @@ const textDefaults: Omit<TextNode, "id" | "type" | "content"> = {
   letterSpacing: 0,
 };
 
-export function setTextNodeStyle(
+export function applyUniformTextStyle(
   node: TextNode,
   style: Partial<TextStyle>,
 ): TextNode {
