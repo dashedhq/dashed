@@ -27,7 +27,27 @@ export function colorToCss(c: Color) {
   return `rgba(${c.r},${c.g},${c.b},${c.a})`;
 }
 
-export function hexToColor(hex: string): Color | null {
+export function tryCssToColor(s: string): Color | null {
+  const m = s.match(/rgba?\((\d+),(\d+),(\d+),([\d.]+)\)/);
+  if (!m) return null;
+  return {
+    r: parseInt(m[1]),
+    g: parseInt(m[2]),
+    b: parseInt(m[3]),
+    a: parseFloat(m[4]),
+  };
+}
+
+export function cssToColor(s: string) {
+  const color = tryCssToColor(s);
+  if (!color) {
+    throw new Error(`CSS string ${s} cannot be parsed to a Color`);
+  }
+
+  return color;
+}
+
+export function tryHexToColor(hex: string): Color | null {
   const match = hex.match(/^#?([0-9a-fA-F]{6})$/);
   if (!match) return null;
   const h = match[1];
@@ -37,6 +57,15 @@ export function hexToColor(hex: string): Color | null {
     b: parseInt(h.slice(4, 6), 16),
     a: 1,
   };
+}
+
+export function hexToColor(hex: string) {
+  const color = tryHexToColor(hex);
+  if (!color) {
+    throw new Error(`Hex string ${hex} cannot be parsed to a Color`);
+  }
+
+  return color;
 }
 
 export function colorToHsva(c: Color): Hsva {

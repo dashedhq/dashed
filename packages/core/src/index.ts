@@ -37,16 +37,26 @@ export { type FrameNode, frameStyle, createFrame } from "./frame";
 export {
   type TextNode,
   type TextRun,
-  textStyle,
+  type TextRunStyle,
+  type Paragraph,
+  type ParagraphStyle,
+  type TextStyle,
+  type TextAlign,
+  type ResolvedTextRunStyle,
+  type ResolvedParagraphStyle,
+  type ResolvedTextStyle,
   textRunStyle,
+  paragraphStyle,
+  textStyle,
   createText,
-  createTextRun,
+  setTextNodeStyle,
+  normalizeTextNode,
+  resolveTextRunStyle,
+  resolveParagraphStyle,
+  hasTextRunStyleOverrides,
+  hasParagraphStyleOverrides,
 } from "./text";
-export {
-  type Background,
-  type GradientStop,
-  backgroundStyle,
-} from "./styles/background";
+export { type Fill, type GradientStop, fillStyle } from "./styles/fill";
 export {
   type BorderStyle,
   type BorderWidths,
@@ -62,7 +72,10 @@ export {
   colorToCss,
   colorToHex,
   colorToHsva,
+  cssToColor,
+  tryCssToColor,
   hexToColor,
+  tryHexToColor,
   hsvaToColor,
 } from "./styles/color";
 export { type Shadow, shadowStyle, opacityStyle } from "./styles/effect";
@@ -79,4 +92,9 @@ export {
   dimensionsStyle,
   paddingStyle,
 } from "./styles/layout";
-export { type ScreenNode, screenStyle, createScreen } from "./screen";
+export {
+  type ScreenNode,
+  type ScreenStyle,
+  screenStyle,
+  createScreen,
+} from "./screen";

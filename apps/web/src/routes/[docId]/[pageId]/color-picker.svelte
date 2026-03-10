@@ -29,11 +29,12 @@
     });
   });
 
-  let areaEl: HTMLDivElement | undefined;
-
-  const updateFromPointer = (e: PointerEvent) => {
-    if (!areaEl) return;
-    const rect = areaEl.getBoundingClientRect();
+  const updateFromPointer = (
+    e: PointerEvent & {
+      currentTarget: EventTarget & HTMLDivElement;
+    },
+  ) => {
+    const rect = e.currentTarget.getBoundingClientRect();
     const x = Math.min(Math.max(e.clientX - rect.left, 0), rect.width);
     const y = Math.min(Math.max(e.clientY - rect.top, 0), rect.height);
     const s = (x / rect.width) * 100;
@@ -46,7 +47,6 @@
 
 <div class="flex flex-col gap-4">
   <div
-    bind:this={areaEl}
     role="slider"
     tabindex="0"
     aria-valuetext="{Math.round(hsva.s)}% saturation, {Math.round(

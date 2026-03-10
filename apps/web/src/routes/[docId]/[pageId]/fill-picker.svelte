@@ -1,7 +1,7 @@
 <script lang="ts">
   import {
-    type Background,
-    backgroundStyle,
+    type Fill,
+    fillStyle,
     colorToHex,
   } from "@opendesigner/core";
   import { Popover } from "bits-ui";
@@ -17,7 +17,7 @@
   import ColorPicker from "./color-picker.svelte";
 
   type Props = Omit<Popover.TriggerProps, "value"> & {
-    value: Background;
+    value: Fill;
   };
 
   let { value = $bindable(), class: className, ...others }: Props = $props();
@@ -35,7 +35,7 @@
       <span
         class="absolute inset-0 bg-[repeating-conic-gradient(var(--color-neutral-600)_0%_25%,transparent_0%_50%)]"
       ></span>
-      <span class="absolute inset-0 z-10" style={backgroundStyle(value)}>
+      <span class="absolute inset-0 z-10" style={fillStyle(value)}>
       </span>
     </span>
     {#if value.type === "solid"}

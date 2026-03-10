@@ -2,6 +2,7 @@
   "name": "opendesigner",
   "private": true,
   "scripts": {
+    "test": "pnpm -r run test",
     "lint": "pnpm -r run lint",
     "format": "pnpm -r run format",
     "typecheck": "pnpm -r run typecheck"

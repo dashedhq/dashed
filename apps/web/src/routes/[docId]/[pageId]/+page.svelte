@@ -7,6 +7,10 @@
   let { data }: PageProps = $props();
 
   let pageData = $state(data.page);
+
+  $effect(() => {
+    pageData = data.page;
+  });
 </script>
 
 {#key page.url.pathname}

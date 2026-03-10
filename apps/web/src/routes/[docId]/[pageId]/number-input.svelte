@@ -3,14 +3,14 @@
 
   type Props = {
     startDecorator?: Snippet;
-    value: number;
+    value: number | null;
+    placeholder?: string;
   };
 
-  let { value = $bindable(), startDecorator }: Props = $props();
+  let { value = $bindable(), startDecorator, placeholder }: Props = $props();
 
   let draftValue = $derived.by(() => {
-    console.log("Here!");
-    return value.toString();
+    return value?.toString() || "";
   });
 </script>
 
@@ -22,13 +22,20 @@
   </div>
   <input
     class="min-w-0 flex-1 outline-none"
+    {placeholder}
     bind:value={draftValue}
     onblur={() => {
+      if (draftValue.trim() === "") {
+        value = null;
+        draftValue = "";
+        return;
+      }
+
       const parsed = parseFloat(draftValue);
       if (!Number.isNaN(parsed) && parsed >= 0 && parsed != value) {
         value = parsed;
       } else {
-        draftValue = value.toString();
+        draftValue = value?.toString() || "";
       }
     }}
   />

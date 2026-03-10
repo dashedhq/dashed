@@ -1,4 +1,3 @@
-import { type Background, backgroundStyle } from "./styles/background";
 import {
   type BorderRadius,
   borderRadiusStyle,
@@ -6,6 +5,7 @@ import {
   bordersStyle,
 } from "./styles/border";
 import { opacityStyle, type Shadow, shadowStyle } from "./styles/effect";
+import { type Fill, fillStyle } from "./styles/fill";
 import {
   type Dimensions,
   dimensionsStyle,
@@ -15,12 +15,8 @@ import {
   paddingStyle,
 } from "./styles/layout";
 
-export type FrameNode = {
-  id: string;
-  name: string;
-  type: "frame";
-  children: string[];
-  background: Background;
+export type FrameStyle = {
+  fill: Fill;
   borders: Borders;
   dimensions: Dimensions;
   borderRadius: BorderRadius;
@@ -30,10 +26,17 @@ export type FrameNode = {
   shadow: Shadow;
 };
 
+export type FrameNode = {
+  id: string;
+  name: string;
+  type: "frame";
+  children: string[];
+} & FrameStyle;
+
 const frameDefaults: Omit<FrameNode, "id" | "type"> = {
   name: "Frame",
   children: [],
-  background: { type: "solid", color: { r: 0, g: 0, b: 0, a: 0 } },
+  fill: { type: "solid", color: { r: 0, g: 0, b: 0, a: 0 } },
   borders: {
     color: { r: 0, g: 0, b: 0, a: 0 },
     style: "solid",
@@ -59,16 +62,16 @@ export function createFrame(
   return { type: "frame", ...frameDefaults, ...opts };
 }
 
-export function frameStyle(node: FrameNode) {
+export function frameStyle(style: FrameStyle) {
   const parts = [
-    backgroundStyle(node.background),
-    bordersStyle(node.borders),
-    borderRadiusStyle(node.borderRadius),
-    dimensionsStyle(node.dimensions),
-    layoutStyle(node.layout),
-    paddingStyle(node.padding),
-    opacityStyle(node.opacity),
-    shadowStyle(node.shadow),
+    fillStyle(style.fill),
+    bordersStyle(style.borders),
+    borderRadiusStyle(style.borderRadius),
+    dimensionsStyle(style.dimensions),
+    layoutStyle(style.layout),
+    paddingStyle(style.padding),
+    opacityStyle(style.opacity),
+    shadowStyle(style.shadow),
   ].filter((s) => s !== "");
 
   return parts.join("; ");

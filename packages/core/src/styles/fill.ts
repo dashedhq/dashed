@@ -5,22 +5,22 @@ export type GradientStop = {
   color: string;
 };
 
-export type Background =
+export type Fill =
   | { type: "solid"; color: Color }
   | { type: "gradient"; stops: GradientStop[]; angle: number }
   | { type: "image"; src: string; fit: "cover" | "contain" | "fill" };
 
-export function backgroundStyle(bg: Background) {
-  if (bg.type === "solid") {
-    return `background-color: ${colorToCss(bg.color)}`;
+export function fillStyle(fill: Fill) {
+  if (fill.type === "solid") {
+    return `background-color: ${colorToCss(fill.color)}`;
   }
 
-  if (bg.type === "gradient") {
-    const stops = bg.stops
+  if (fill.type === "gradient") {
+    const stops = fill.stops
       .map((s) => `${s.color} ${s.offset * 100}%`)
       .join(", ");
-    return `background: linear-gradient(${bg.angle}deg, ${stops})`;
+    return `background: linear-gradient(${fill.angle}deg, ${stops})`;
   }
 
-  return `background-image: url(${bg.src}); background-size: ${bg.fit}`;
+  return `background-image: url(${fill.src}); background-size: ${fill.fit}`;
 }

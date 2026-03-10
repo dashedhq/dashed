@@ -1,17 +1,15 @@
 import {
-  type Borders,
   type Color,
+  type Document,
+  type Node,
+  type Page,
   createFrame,
   createScreen,
   createText,
-  createTextRun,
-  type Document,
-  type FrameNode,
-  type Page,
-  type Size,
 } from "@opendesigner/core";
 
-// shadcn/ui zinc palette
+// -- Zinc palette (shadcn/ui) --
+
 const zinc950: Color = { r: 9, g: 9, b: 11, a: 1 };
 const zinc500: Color = { r: 113, g: 113, b: 122, a: 1 };
 const zinc400: Color = { r: 161, g: 161, b: 170, a: 1 };
@@ -19,226 +17,388 @@ const zinc200: Color = { r: 228, g: 228, b: 231, a: 1 };
 const zinc100: Color = { r: 244, g: 244, b: 245, a: 1 };
 const zinc50: Color = { r: 250, g: 250, b: 250, a: 1 };
 const white: Color = { r: 255, g: 255, b: 255, a: 1 };
+const green600: Color = { r: 22, g: 163, b: 74, a: 1 };
+const amber500: Color = { r: 234, g: 179, b: 8, a: 1 };
 
-const allBorders: Borders = {
+// -- Helpers --
+
+function t(text: string) {
+  return { content: [{ text }] };
+}
+
+const fill = { type: "fill" as const };
+const hug = { type: "hug" as const };
+function fixed(value: number) {
+  return { type: "fixed" as const, value };
+}
+function pad(y: number, x: number) {
+  return { top: y, right: x, bottom: y, left: x };
+}
+function radius(v: number) {
+  return { topLeft: v, topRight: v, bottomRight: v, bottomLeft: v };
+}
+function solid(color: Color) {
+  return { type: "solid" as const, color };
+}
+
+const allBorders = {
   color: zinc200,
-  style: "solid",
+  style: "solid" as const,
   widths: { top: 1, right: 1, bottom: 1, left: 1 },
 };
-const bottomBorder: Borders = {
+const bottomBorder = {
   color: zinc200,
-  style: "solid",
+  style: "solid" as const,
   widths: { top: 0, right: 0, bottom: 1, left: 0 },
 };
 
-const fixed = (w: number, h: number): Pick<FrameNode, "dimensions"> => ({
-  dimensions: {
-    width: { type: "fixed", value: w },
-    height: { type: "fixed", value: h },
-  },
-});
+// ── Page 1: Auth Flow ──────────────────────────────────────────────
 
-const fill: Size = { type: "fill" };
-const hug: Size = { type: "hug" };
+function buildAuthPage(): { nodes: Record<string, Node>; children: string[] } {
+  const nodes: Record<string, Node> = {};
+  function add<T extends Node>(node: T) {
+    nodes[node.id] = node;
+    return node;
+  }
 
-const hStack = (gap = 0): Pick<FrameNode, "layout"> => ({
-  layout: {
-    type: "stack",
-    direction: "horizontal",
-    gap,
-    align: "center",
-    distribute: "start",
-  },
-});
+  // -- Login screen --
 
-const vStack = (gap = 0): Pick<FrameNode, "layout"> => ({
-  layout: {
-    type: "stack",
-    direction: "vertical",
-    gap,
-    align: "start",
-    distribute: "start",
-  },
-});
+  const loginLogo = add(
+    createText({
+      id: "login-logo",
+      name: "Logo",
+      content: [t("Acme Inc")],
+      fontSize: 16,
+      fontWeight: 700,
+      color: zinc950,
+    }),
+  );
 
-const pad = (
-  top: number,
-  right: number,
-  bottom: number,
-  left: number,
-): Pick<FrameNode, "padding"> => ({
-  padding: { top, right, bottom, left },
-});
+  const loginHeader = add(
+    createFrame({
+      id: "login-header",
+      name: "Header",
+      children: [loginLogo.id],
+      fill: solid(white),
+      dimensions: { width: fill, height: fixed(56) },
+      layout: {
+        type: "stack",
+        direction: "horizontal",
+        gap: 0,
+        align: "center",
+        distribute: "start",
+      },
+      padding: pad(0, 24),
+      borders: bottomBorder,
+    }),
+  );
 
-const bg = (color: Color): Pick<FrameNode, "background"> => ({
-  background: { type: "solid", color },
-});
+  const loginTitle = add(
+    createText({
+      id: "login-title",
+      name: "Title",
+      content: [t("Sign in")],
+      fontSize: 24,
+      fontWeight: 600,
+      color: zinc950,
+    }),
+  );
 
-const rounded = (r: number): Pick<FrameNode, "borderRadius"> => ({
-  borderRadius: { topLeft: r, topRight: r, bottomRight: r, bottomLeft: r },
-});
+  const loginDesc = add(
+    createText({
+      id: "login-desc",
+      name: "Description",
+      content: [t("Enter your email below to sign in to your account")],
+      fontSize: 14,
+      color: zinc500,
+    }),
+  );
 
-const heading = (text: string, size = 24) =>
-  createTextRun({ text, fontSize: size, fontWeight: 600, color: zinc950 });
+  const loginEmailLabel = add(
+    createText({
+      id: "login-email-label",
+      name: "Email Label",
+      content: [t("Email")],
+      fontSize: 14,
+      color: zinc950,
+    }),
+  );
 
-const body = (text: string, color = zinc950) =>
-  createTextRun({ text, fontSize: 14, color });
+  const loginEmailPlaceholder = add(
+    createText({
+      id: "login-email-ph",
+      name: "Placeholder",
+      content: [t("m@example.com")],
+      fontSize: 14,
+      color: zinc500,
+    }),
+  );
 
-const muted = (text: string) =>
-  createTextRun({ text, fontSize: 14, color: zinc500 });
+  const loginEmailInput = add(
+    createFrame({
+      id: "login-email",
+      name: "Email Input",
+      children: [loginEmailPlaceholder.id],
+      fill: solid(white),
+      dimensions: { width: fill, height: fixed(40) },
+      padding: pad(0, 12),
+      borderRadius: radius(6),
+      borders: allBorders,
+      layout: {
+        type: "stack",
+        direction: "horizontal",
+        gap: 0,
+        align: "center",
+        distribute: "start",
+      },
+    }),
+  );
 
-const small = (text: string, color = zinc500) =>
-  createTextRun({ text, fontSize: 12, color });
+  const loginPassLabel = add(
+    createText({
+      id: "login-pass-label",
+      name: "Password Label",
+      content: [t("Password")],
+      fontSize: 14,
+      color: zinc950,
+    }),
+  );
 
-const mockPages: Page[] = [
-  {
-    id: "page-1",
-    name: "Auth Flow",
-    children: ["screen-1", "screen-2"],
-    nodes: {
-      "screen-1": createScreen({
-        id: "screen-1",
-        name: "Login",
-        x: 100,
-        y: 100,
-        ...bg(zinc100),
-        width: 390,
-        height: 844,
-        children: ["login-root"],
+  const loginPassPlaceholder = add(
+    createText({
+      id: "login-pass-ph",
+      name: "Placeholder",
+      content: [t("\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022")],
+      fontSize: 14,
+      color: zinc500,
+    }),
+  );
+
+  const loginPassInput = add(
+    createFrame({
+      id: "login-pass",
+      name: "Password Input",
+      children: [loginPassPlaceholder.id],
+      fill: solid(white),
+      dimensions: { width: fill, height: fixed(40) },
+      padding: pad(0, 12),
+      borderRadius: radius(6),
+      borders: allBorders,
+      layout: {
+        type: "stack",
+        direction: "horizontal",
+        gap: 0,
+        align: "center",
+        distribute: "start",
+      },
+    }),
+  );
+
+  const loginBtnText = add(
+    createText({
+      id: "login-btn-text",
+      name: "Button Text",
+      content: [t("Sign In")],
+      fontSize: 14,
+      fontWeight: 500,
+      color: white,
+      textAlign: "center",
+    }),
+  );
+
+  const loginBtn = add(
+    createFrame({
+      id: "login-btn",
+      name: "Sign In Button",
+      children: [loginBtnText.id],
+      fill: solid(zinc950),
+      dimensions: { width: fill, height: fixed(40) },
+      borderRadius: radius(6),
+      layout: {
+        type: "stack",
+        direction: "horizontal",
+        gap: 0,
+        align: "center",
+        distribute: "center",
+      },
+    }),
+  );
+
+  const loginForgot = add(
+    createText({
+      id: "login-forgot",
+      name: "Forgot Password",
+      content: [t("Forgot your password?")],
+      fontSize: 12,
+      color: zinc500,
+      textAlign: "center",
+    }),
+  );
+
+  const loginCard = add(
+    createFrame({
+      id: "login-card",
+      name: "Card",
+      children: [
+        loginTitle.id,
+        loginDesc.id,
+        loginEmailLabel.id,
+        loginEmailInput.id,
+        loginPassLabel.id,
+        loginPassInput.id,
+        loginBtn.id,
+        loginForgot.id,
+      ],
+      fill: solid(white),
+      dimensions: { width: fixed(340), height: hug },
+      layout: {
+        type: "stack",
+        direction: "vertical",
+        gap: 16,
+        align: "start",
+        distribute: "start",
+      },
+      padding: pad(32, 24),
+      borderRadius: radius(12),
+      borders: allBorders,
+      shadow: {
+        color: { r: 0, g: 0, b: 0, a: 0.08 },
+        x: 0,
+        y: 2,
+        blur: 8,
+        spread: 0,
+      },
+    }),
+  );
+
+  const loginBody = add(
+    createFrame({
+      id: "login-body",
+      name: "Body",
+      children: [loginCard.id],
+      dimensions: { width: fill, height: fill },
+      fill: solid(zinc100),
+      layout: {
+        type: "stack",
+        direction: "vertical",
+        gap: 0,
+        align: "center",
+        distribute: "center",
+      },
+    }),
+  );
+
+  const loginRoot = add(
+    createFrame({
+      id: "login-root",
+      name: "Login Root",
+      children: [loginHeader.id, loginBody.id],
+      fill: solid(zinc100),
+      dimensions: { width: fill, height: fill },
+      layout: {
+        type: "stack",
+        direction: "vertical",
+        gap: 0,
+        align: "start",
+        distribute: "start",
+      },
+    }),
+  );
+
+  add(
+    createScreen({
+      id: "screen-login",
+      name: "Login",
+      x: 100,
+      y: 100,
+      width: 390,
+      height: 844,
+      fill: solid(zinc100),
+      children: [loginRoot.id],
+    }),
+  );
+
+  // -- Sign Up screen --
+
+  const signupLogo = add(
+    createText({
+      id: "signup-logo",
+      name: "Logo",
+      content: [t("Acme Inc")],
+      fontSize: 16,
+      fontWeight: 700,
+      color: zinc950,
+    }),
+  );
+
+  const signupHeader = add(
+    createFrame({
+      id: "signup-header",
+      name: "Header",
+      children: [signupLogo.id],
+      fill: solid(white),
+      dimensions: { width: fill, height: fixed(56) },
+      layout: {
+        type: "stack",
+        direction: "horizontal",
+        gap: 0,
+        align: "center",
+        distribute: "start",
+      },
+      padding: pad(0, 24),
+      borders: bottomBorder,
+    }),
+  );
+
+  const signupTitle = add(
+    createText({
+      id: "signup-title",
+      name: "Title",
+      content: [t("Create an account")],
+      fontSize: 24,
+      fontWeight: 600,
+      color: zinc950,
+    }),
+  );
+
+  const signupDesc = add(
+    createText({
+      id: "signup-desc",
+      name: "Description",
+      content: [t("Enter your information to get started")],
+      fontSize: 14,
+      color: zinc500,
+    }),
+  );
+
+  function inputField(id: string, label: string, placeholder: string) {
+    const lbl = add(
+      createText({
+        id: `${id}-label`,
+        name: `${label} Label`,
+        content: [t(label)],
+        fontSize: 14,
+        color: zinc950,
       }),
-      "screen-2": createScreen({
-        id: "screen-2",
-        name: "Sign Up",
-        x: 590,
-        y: 100,
-        ...bg(zinc100),
-        width: 390,
-        height: 844,
-        children: ["signup-root"],
-      }),
-      // --- Login screen ---
-      "login-root": createFrame({
-        id: "login-root",
-        name: "Login Root",
-        children: ["login-header", "login-body"],
-        ...bg(zinc100),
-        dimensions: { width: fill, height: fill },
-        ...vStack(0),
-      }),
-      "login-header": createFrame({
-        id: "login-header",
-        name: "Header",
-        children: ["login-logo"],
-        ...bg(white),
-        ...fixed(390, 56),
-        ...hStack(8),
-        ...pad(0, 24, 0, 24),
-        borders: bottomBorder,
-      }),
-      "login-logo": createText({
-        id: "login-logo",
-        name: "Logo",
-        content: [
-          createTextRun({
-            text: "Acme Inc",
-            fontSize: 16,
-            fontWeight: 700,
-            color: zinc950,
-          }),
-        ],
-      }),
-      "login-body": createFrame({
-        id: "login-body",
-        name: "Body",
-        children: ["login-card"],
-        dimensions: { width: fill, height: fill },
-        ...bg(zinc100),
-        layout: {
-          type: "stack",
-          direction: "vertical",
-          gap: 0,
-          align: "center",
-          distribute: "center",
-        },
-      }),
-      "login-card": createFrame({
-        id: "login-card",
-        name: "Card",
-        children: [
-          "login-title",
-          "login-desc",
-          "login-email-label",
-          "login-email",
-          "login-pass-label",
-          "login-pass",
-          "login-btn",
-          "login-forgot",
-        ],
-        ...bg(white),
-        ...fixed(340, -1),
-        dimensions: { width: { type: "fixed", value: 340 }, height: hug },
-        ...vStack(16),
-        ...pad(32, 24, 32, 24),
-        ...rounded(12),
-        borders: allBorders,
-        shadow: {
-          color: { r: 0, g: 0, b: 0, a: 0.08 },
-          x: 0,
-          y: 2,
-          blur: 8,
-          spread: 0,
-        },
-      }),
-      "login-title": createText({
-        id: "login-title",
-        name: "Title",
-        content: [heading("Sign in")],
-      }),
-      "login-desc": createText({
-        id: "login-desc",
-        name: "Description",
-        content: [muted("Enter your email below to sign in to your account")],
-      }),
-      "login-email-label": createText({
-        id: "login-email-label",
-        name: "Email Label",
-        content: [body("Email", zinc950)],
-      }),
-      "login-email": createFrame({
-        id: "login-email",
-        name: "Email Input",
-        children: ["login-email-placeholder"],
-        ...bg(white),
-        dimensions: { width: fill, height: { type: "fixed", value: 40 } },
-        ...pad(0, 12, 0, 12),
-        ...rounded(6),
-        borders: allBorders,
-        layout: {
-          type: "stack",
-          direction: "horizontal",
-          gap: 0,
-          align: "center",
-          distribute: "start",
-        },
-      }),
-      "login-email-placeholder": createText({
-        id: "login-email-placeholder",
+    );
+    const ph = add(
+      createText({
+        id: `${id}-ph`,
         name: "Placeholder",
-        content: [muted("m@example.com")],
+        content: [t(placeholder)],
+        fontSize: 14,
+        color: zinc500,
       }),
-      "login-pass-label": createText({
-        id: "login-pass-label",
-        name: "Password Label",
-        content: [body("Password", zinc950)],
-      }),
-      "login-pass": createFrame({
-        id: "login-pass",
-        name: "Password Input",
-        children: ["login-pass-placeholder"],
-        ...bg(white),
-        dimensions: { width: fill, height: { type: "fixed", value: 40 } },
-        ...pad(0, 12, 0, 12),
-        ...rounded(6),
+    );
+    const input = add(
+      createFrame({
+        id,
+        name: `${label} Input`,
+        children: [ph.id],
+        fill: solid(white),
+        dimensions: { width: fill, height: fixed(40) },
+        padding: pad(0, 12),
+        borderRadius: radius(6),
         borders: allBorders,
         layout: {
           type: "stack",
@@ -248,731 +408,640 @@ const mockPages: Page[] = [
           distribute: "start",
         },
       }),
-      "login-pass-placeholder": createText({
-        id: "login-pass-placeholder",
-        name: "Placeholder",
-        content: [
-          createTextRun({
-            text: "\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022",
-            fontSize: 14,
-            color: zinc500,
-          }),
-        ],
-      }),
-      "login-btn": createFrame({
-        id: "login-btn",
-        name: "Sign In Button",
-        children: ["login-btn-text"],
-        ...bg(zinc950),
-        dimensions: { width: fill, height: { type: "fixed", value: 40 } },
-        ...rounded(6),
-        layout: {
-          type: "stack",
-          direction: "horizontal",
-          gap: 0,
-          align: "center",
-          distribute: "center",
-        },
-      }),
-      "login-btn-text": createText({
-        id: "login-btn-text",
-        name: "Button Text",
-        content: [
-          createTextRun({
-            text: "Sign In",
-            fontSize: 14,
-            fontWeight: 500,
-            color: white,
-          }),
-        ],
-        textAlign: "center",
-      }),
-      "login-forgot": createText({
-        id: "login-forgot",
-        name: "Forgot Password",
-        content: [small("Forgot your password?", zinc500)],
-        textAlign: "center",
-      }),
+    );
+    return { label: lbl, input };
+  }
 
-      // --- Signup screen ---
-      "signup-root": createFrame({
-        id: "signup-root",
-        name: "Signup Root",
-        children: ["signup-header", "signup-body"],
-        ...bg(zinc100),
-        dimensions: { width: fill, height: fill },
-        ...vStack(0),
-      }),
-      "signup-header": createFrame({
-        id: "signup-header",
-        name: "Header",
-        children: ["signup-logo"],
-        ...bg(white),
-        ...fixed(390, 56),
-        ...hStack(8),
-        ...pad(0, 24, 0, 24),
-        borders: bottomBorder,
-      }),
-      "signup-logo": createText({
-        id: "signup-logo",
-        name: "Logo",
-        content: [
-          createTextRun({
-            text: "Acme Inc",
-            fontSize: 16,
-            fontWeight: 700,
-            color: zinc950,
-          }),
-        ],
-      }),
-      "signup-body": createFrame({
-        id: "signup-body",
-        name: "Body",
-        children: ["signup-card"],
-        dimensions: { width: fill, height: fill },
-        ...bg(zinc100),
-        layout: {
-          type: "stack",
-          direction: "vertical",
-          gap: 0,
-          align: "center",
-          distribute: "center",
-        },
-      }),
-      "signup-card": createFrame({
-        id: "signup-card",
-        name: "Card",
-        children: [
-          "signup-title",
-          "signup-desc",
-          "signup-name-label",
-          "signup-name",
-          "signup-email-label",
-          "signup-email",
-          "signup-pass-label",
-          "signup-pass",
-          "signup-btn",
-          "signup-signin",
-        ],
-        ...bg(white),
-        dimensions: { width: { type: "fixed", value: 340 }, height: hug },
-        ...vStack(16),
-        ...pad(32, 24, 32, 24),
-        ...rounded(12),
-        borders: allBorders,
-        shadow: {
-          color: { r: 0, g: 0, b: 0, a: 0.08 },
-          x: 0,
-          y: 2,
-          blur: 8,
-          spread: 0,
-        },
-      }),
-      "signup-title": createText({
-        id: "signup-title",
-        name: "Title",
-        content: [heading("Create an account")],
-      }),
-      "signup-desc": createText({
-        id: "signup-desc",
-        name: "Description",
-        content: [muted("Enter your information to get started")],
-      }),
-      "signup-name-label": createText({
-        id: "signup-name-label",
-        name: "Name Label",
-        content: [body("Name", zinc950)],
-      }),
-      "signup-name": createFrame({
-        id: "signup-name",
-        name: "Name Input",
-        children: ["signup-name-placeholder"],
-        ...bg(white),
-        dimensions: { width: fill, height: { type: "fixed", value: 40 } },
-        ...pad(0, 12, 0, 12),
-        ...rounded(6),
-        borders: allBorders,
-        layout: {
-          type: "stack",
-          direction: "horizontal",
-          gap: 0,
-          align: "center",
-          distribute: "start",
-        },
-      }),
-      "signup-name-placeholder": createText({
-        id: "signup-name-placeholder",
-        name: "Placeholder",
-        content: [muted("John Doe")],
-      }),
-      "signup-email-label": createText({
-        id: "signup-email-label",
-        name: "Email Label",
-        content: [body("Email", zinc950)],
-      }),
-      "signup-email": createFrame({
-        id: "signup-email",
-        name: "Email Input",
-        children: ["signup-email-placeholder"],
-        ...bg(white),
-        dimensions: { width: fill, height: { type: "fixed", value: 40 } },
-        ...pad(0, 12, 0, 12),
-        ...rounded(6),
-        borders: allBorders,
-        layout: {
-          type: "stack",
-          direction: "horizontal",
-          gap: 0,
-          align: "center",
-          distribute: "start",
-        },
-      }),
-      "signup-email-placeholder": createText({
-        id: "signup-email-placeholder",
-        name: "Placeholder",
-        content: [muted("m@example.com")],
-      }),
-      "signup-pass-label": createText({
-        id: "signup-pass-label",
-        name: "Password Label",
-        content: [body("Password", zinc950)],
-      }),
-      "signup-pass": createFrame({
-        id: "signup-pass",
-        name: "Password Input",
-        children: ["signup-pass-placeholder"],
-        ...bg(white),
-        dimensions: { width: fill, height: { type: "fixed", value: 40 } },
-        ...pad(0, 12, 0, 12),
-        ...rounded(6),
-        borders: allBorders,
-        layout: {
-          type: "stack",
-          direction: "horizontal",
-          gap: 0,
-          align: "center",
-          distribute: "start",
-        },
-      }),
-      "signup-pass-placeholder": createText({
-        id: "signup-pass-placeholder",
-        name: "Placeholder",
-        content: [
-          createTextRun({
-            text: "\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022",
-            fontSize: 14,
-            color: zinc500,
-          }),
-        ],
-      }),
-      "signup-btn": createFrame({
-        id: "signup-btn",
-        name: "Create Account Button",
-        children: ["signup-btn-text"],
-        ...bg(zinc950),
-        dimensions: { width: fill, height: { type: "fixed", value: 40 } },
-        ...rounded(6),
-        layout: {
-          type: "stack",
-          direction: "horizontal",
-          gap: 0,
-          align: "center",
-          distribute: "center",
-        },
-      }),
-      "signup-btn-text": createText({
-        id: "signup-btn-text",
-        name: "Button Text",
-        content: [
-          createTextRun({
-            text: "Create Account",
-            fontSize: 14,
-            fontWeight: 500,
-            color: white,
-          }),
-        ],
-        textAlign: "center",
-      }),
-      "signup-signin": createText({
-        id: "signup-signin",
-        name: "Sign In Link",
-        content: [small("Already have an account? Sign in", zinc500)],
-        textAlign: "center",
-      }),
-    },
-  },
-  {
-    id: "page-2",
-    name: "Dashboard",
-    children: ["screen-3"],
-    nodes: {
-      "screen-3": createScreen({
-        id: "screen-3",
-        name: "Dashboard",
-        x: 100,
-        y: 100,
-        ...bg(zinc100),
-        width: 1280,
-        height: 800,
-        children: ["dash-root"],
-      }),
-      "dash-root": createFrame({
-        id: "dash-root",
-        name: "Dashboard Root",
-        children: ["dash-sidebar", "dash-main"],
-        dimensions: { width: fill, height: fill },
-        ...hStack(0),
-      }),
-      "dash-sidebar": createFrame({
-        id: "dash-sidebar",
-        name: "Sidebar",
-        children: ["dash-sidebar-logo", "dash-nav"],
-        ...bg(zinc950),
-        ...fixed(240, -1),
-        dimensions: { width: { type: "fixed", value: 240 }, height: fill },
-        ...vStack(24),
-        ...pad(20, 16, 20, 16),
-      }),
-      "dash-sidebar-logo": createText({
-        id: "dash-sidebar-logo",
-        name: "Logo",
-        content: [
-          createTextRun({
-            text: "Acme Inc",
-            fontSize: 16,
-            fontWeight: 700,
-            color: white,
-          }),
-        ],
-      }),
-      "dash-nav": createFrame({
-        id: "dash-nav",
-        name: "Navigation",
-        children: ["dash-nav-1", "dash-nav-2", "dash-nav-3", "dash-nav-4"],
-        dimensions: { width: fill, height: hug },
-        ...vStack(4),
-      }),
-      "dash-nav-1": createFrame({
-        id: "dash-nav-1",
-        name: "Nav - Dashboard",
-        children: ["dash-nav-1-text"],
-        ...bg({ r: 39, g: 39, b: 42, a: 1 }),
-        dimensions: { width: fill, height: { type: "fixed", value: 36 } },
-        ...pad(0, 12, 0, 12),
-        ...rounded(6),
-        layout: {
-          type: "stack",
-          direction: "horizontal",
-          gap: 0,
-          align: "center",
-          distribute: "start",
-        },
-      }),
-      "dash-nav-1-text": createText({
-        id: "dash-nav-1-text",
-        name: "Text",
-        content: [
-          createTextRun({
-            text: "Dashboard",
-            fontSize: 14,
-            fontWeight: 500,
-            color: zinc50,
-          }),
-        ],
-      }),
-      "dash-nav-2": createFrame({
-        id: "dash-nav-2",
-        name: "Nav - Customers",
-        children: ["dash-nav-2-text"],
-        dimensions: { width: fill, height: { type: "fixed", value: 36 } },
-        ...pad(0, 12, 0, 12),
-        ...rounded(6),
-        layout: {
-          type: "stack",
-          direction: "horizontal",
-          gap: 0,
-          align: "center",
-          distribute: "start",
-        },
-      }),
-      "dash-nav-2-text": createText({
-        id: "dash-nav-2-text",
-        name: "Text",
-        content: [
-          createTextRun({ text: "Customers", fontSize: 14, color: zinc400 }),
-        ],
-      }),
-      "dash-nav-3": createFrame({
-        id: "dash-nav-3",
-        name: "Nav - Products",
-        children: ["dash-nav-3-text"],
-        dimensions: { width: fill, height: { type: "fixed", value: 36 } },
-        ...pad(0, 12, 0, 12),
-        ...rounded(6),
-        layout: {
-          type: "stack",
-          direction: "horizontal",
-          gap: 0,
-          align: "center",
-          distribute: "start",
-        },
-      }),
-      "dash-nav-3-text": createText({
-        id: "dash-nav-3-text",
-        name: "Text",
-        content: [
-          createTextRun({ text: "Products", fontSize: 14, color: zinc400 }),
-        ],
-      }),
-      "dash-nav-4": createFrame({
-        id: "dash-nav-4",
-        name: "Nav - Settings",
-        children: ["dash-nav-4-text"],
-        dimensions: { width: fill, height: { type: "fixed", value: 36 } },
-        ...pad(0, 12, 0, 12),
-        ...rounded(6),
-        layout: {
-          type: "stack",
-          direction: "horizontal",
-          gap: 0,
-          align: "center",
-          distribute: "start",
-        },
-      }),
-      "dash-nav-4-text": createText({
-        id: "dash-nav-4-text",
-        name: "Text",
-        content: [
-          createTextRun({ text: "Settings", fontSize: 14, color: zinc400 }),
-        ],
-      }),
-      "dash-main": createFrame({
-        id: "dash-main",
-        name: "Main Content",
-        children: ["dash-topbar", "dash-content"],
-        ...bg(white),
-        dimensions: { width: fill, height: fill },
-        ...vStack(0),
-      }),
-      "dash-topbar": createFrame({
-        id: "dash-topbar",
-        name: "Top Bar",
-        children: ["dash-topbar-title"],
-        ...bg(white),
-        dimensions: { width: fill, height: { type: "fixed", value: 56 } },
-        ...pad(0, 24, 0, 24),
-        borders: bottomBorder,
-        layout: {
-          type: "stack",
-          direction: "horizontal",
-          gap: 0,
-          align: "center",
-          distribute: "start",
-        },
-      }),
-      "dash-topbar-title": createText({
-        id: "dash-topbar-title",
-        name: "Title",
-        content: [
-          createTextRun({
-            text: "Dashboard",
-            fontSize: 16,
-            fontWeight: 600,
-            color: zinc950,
-          }),
-        ],
-      }),
-      "dash-content": createFrame({
-        id: "dash-content",
-        name: "Content",
-        children: ["dash-stats", "dash-table-card"],
-        dimensions: { width: fill, height: fill },
-        ...vStack(24),
-        ...pad(24, 24, 24, 24),
-      }),
-      "dash-stats": createFrame({
-        id: "dash-stats",
-        name: "Stats Row",
-        children: ["dash-stat-1", "dash-stat-2", "dash-stat-3"],
-        dimensions: { width: fill, height: hug },
-        ...hStack(16),
-      }),
-      "dash-stat-1": createFrame({
-        id: "dash-stat-1",
-        name: "Total Revenue",
-        children: ["dash-stat-1-label", "dash-stat-1-value"],
-        ...bg(white),
-        dimensions: { width: fill, height: hug },
-        ...vStack(4),
-        ...pad(20, 20, 20, 20),
-        ...rounded(8),
-        borders: allBorders,
-      }),
-      "dash-stat-1-label": createText({
-        id: "dash-stat-1-label",
-        name: "Label",
-        content: [small("Total Revenue", zinc500)],
-      }),
-      "dash-stat-1-value": createText({
-        id: "dash-stat-1-value",
-        name: "Value",
-        content: [heading("$45,231", 28)],
-      }),
-      "dash-stat-2": createFrame({
-        id: "dash-stat-2",
-        name: "Customers",
-        children: ["dash-stat-2-label", "dash-stat-2-value"],
-        ...bg(white),
-        dimensions: { width: fill, height: hug },
-        ...vStack(4),
-        ...pad(20, 20, 20, 20),
-        ...rounded(8),
-        borders: allBorders,
-      }),
-      "dash-stat-2-label": createText({
-        id: "dash-stat-2-label",
-        name: "Label",
-        content: [small("Customers", zinc500)],
-      }),
-      "dash-stat-2-value": createText({
-        id: "dash-stat-2-value",
-        name: "Value",
-        content: [heading("+2,350", 28)],
-      }),
-      "dash-stat-3": createFrame({
-        id: "dash-stat-3",
-        name: "Active Now",
-        children: ["dash-stat-3-label", "dash-stat-3-value"],
-        ...bg(white),
-        dimensions: { width: fill, height: hug },
-        ...vStack(4),
-        ...pad(20, 20, 20, 20),
-        ...rounded(8),
-        borders: allBorders,
-      }),
-      "dash-stat-3-label": createText({
-        id: "dash-stat-3-label",
-        name: "Label",
-        content: [small("Active Now", zinc500)],
-      }),
-      "dash-stat-3-value": createText({
-        id: "dash-stat-3-value",
-        name: "Value",
-        content: [heading("+573", 28)],
-      }),
-      "dash-table-card": createFrame({
-        id: "dash-table-card",
-        name: "Recent Orders",
-        children: [
-          "dash-table-header",
-          "dash-table-row-head",
-          "dash-table-row-1",
-          "dash-table-row-2",
-          "dash-table-row-3",
-        ],
-        ...bg(white),
-        dimensions: { width: fill, height: hug },
-        ...vStack(0),
-        ...rounded(8),
-        borders: allBorders,
-      }),
-      "dash-table-header": createFrame({
-        id: "dash-table-header",
-        name: "Table Header",
-        children: ["dash-table-header-text"],
-        dimensions: { width: fill, height: hug },
-        ...pad(16, 20, 16, 20),
-        borders: bottomBorder,
-      }),
-      "dash-table-header-text": createText({
-        id: "dash-table-header-text",
-        name: "Title",
-        content: [
-          createTextRun({
-            text: "Recent Orders",
-            fontSize: 16,
-            fontWeight: 600,
-            color: zinc950,
-          }),
-        ],
-      }),
-      "dash-table-row-head": createFrame({
-        id: "dash-table-row-head",
-        name: "Column Headers",
-        children: ["dash-th-1", "dash-th-2", "dash-th-3"],
-        ...bg(zinc100),
-        dimensions: { width: fill, height: { type: "fixed", value: 40 } },
-        ...pad(0, 20, 0, 20),
-        layout: {
-          type: "stack",
-          direction: "horizontal",
-          gap: 0,
-          align: "center",
-          distribute: "start",
-        },
-      }),
-      "dash-th-1": createText({
-        id: "dash-th-1",
-        name: "Customer",
-        content: [small("Customer", zinc500)],
-      }),
-      "dash-th-2": createFrame({
-        id: "dash-th-2",
-        name: "Spacer",
-        dimensions: { width: fill, height: hug },
-        children: ["dash-th-2-text"],
-      }),
-      "dash-th-2-text": createText({
-        id: "dash-th-2-text",
-        name: "Status",
-        content: [small("Status", zinc500)],
-      }),
-      "dash-th-3": createText({
-        id: "dash-th-3",
-        name: "Amount",
-        content: [small("Amount", zinc500)],
-        textAlign: "right",
-      }),
-      "dash-table-row-1": createFrame({
-        id: "dash-table-row-1",
-        name: "Row 1",
-        children: ["dash-r1-name", "dash-r1-spacer", "dash-r1-amount"],
-        dimensions: { width: fill, height: { type: "fixed", value: 48 } },
-        ...pad(0, 20, 0, 20),
-        borders: bottomBorder,
-        layout: {
-          type: "stack",
-          direction: "horizontal",
-          gap: 0,
-          align: "center",
-          distribute: "start",
-        },
-      }),
-      "dash-r1-name": createText({
-        id: "dash-r1-name",
-        name: "Name",
-        content: [body("Olivia Martin")],
-      }),
-      "dash-r1-spacer": createFrame({
-        id: "dash-r1-spacer",
-        name: "Spacer",
-        dimensions: { width: fill, height: hug },
-        children: ["dash-r1-status"],
-      }),
-      "dash-r1-status": createText({
-        id: "dash-r1-status",
-        name: "Status",
-        content: [
-          createTextRun({
-            text: "Completed",
-            fontSize: 12,
-            color: { r: 22, g: 163, b: 74, a: 1 },
-          }),
-        ],
-      }),
-      "dash-r1-amount": createText({
-        id: "dash-r1-amount",
-        name: "Amount",
-        content: [body("$1,999.00")],
-        textAlign: "right",
-      }),
-      "dash-table-row-2": createFrame({
-        id: "dash-table-row-2",
-        name: "Row 2",
-        children: ["dash-r2-name", "dash-r2-spacer", "dash-r2-amount"],
-        dimensions: { width: fill, height: { type: "fixed", value: 48 } },
-        ...pad(0, 20, 0, 20),
-        borders: bottomBorder,
-        layout: {
-          type: "stack",
-          direction: "horizontal",
-          gap: 0,
-          align: "center",
-          distribute: "start",
-        },
-      }),
-      "dash-r2-name": createText({
-        id: "dash-r2-name",
-        name: "Name",
-        content: [body("Jackson Lee")],
-      }),
-      "dash-r2-spacer": createFrame({
-        id: "dash-r2-spacer",
-        name: "Spacer",
-        dimensions: { width: fill, height: hug },
-        children: ["dash-r2-status"],
-      }),
-      "dash-r2-status": createText({
-        id: "dash-r2-status",
-        name: "Status",
-        content: [
-          createTextRun({
-            text: "Processing",
-            fontSize: 12,
-            color: { r: 234, g: 179, b: 8, a: 1 },
-          }),
-        ],
-      }),
-      "dash-r2-amount": createText({
-        id: "dash-r2-amount",
-        name: "Amount",
-        content: [body("$39.00")],
-        textAlign: "right",
-      }),
-      "dash-table-row-3": createFrame({
-        id: "dash-table-row-3",
-        name: "Row 3",
-        children: ["dash-r3-name", "dash-r3-spacer", "dash-r3-amount"],
-        dimensions: { width: fill, height: { type: "fixed", value: 48 } },
-        ...pad(0, 20, 0, 20),
-        layout: {
-          type: "stack",
-          direction: "horizontal",
-          gap: 0,
-          align: "center",
-          distribute: "start",
-        },
-      }),
-      "dash-r3-name": createText({
-        id: "dash-r3-name",
-        name: "Name",
-        content: [body("Isabella Nguyen")],
-      }),
-      "dash-r3-spacer": createFrame({
-        id: "dash-r3-spacer",
-        name: "Spacer",
-        dimensions: { width: fill, height: hug },
-        children: ["dash-r3-status"],
-      }),
-      "dash-r3-status": createText({
-        id: "dash-r3-status",
-        name: "Status",
-        content: [
-          createTextRun({
-            text: "Completed",
-            fontSize: 12,
-            color: { r: 22, g: 163, b: 74, a: 1 },
-          }),
-        ],
-      }),
-      "dash-r3-amount": createText({
-        id: "dash-r3-amount",
-        name: "Amount",
-        content: [body("$299.00")],
-        textAlign: "right",
-      }),
-    },
-  },
-];
+  const signupName = inputField("signup-name", "Name", "John Doe");
+  const signupEmail = inputField("signup-email", "Email", "m@example.com");
+  const signupPass = inputField(
+    "signup-pass",
+    "Password",
+    "\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022",
+  );
 
-export function getDocument(id: string): Document {
-  return {
-    id,
-    name: "My new project",
-    pages: mockPages.map((p) => ({ id: p.id, name: p.name })),
-  };
+  const signupBtnText = add(
+    createText({
+      id: "signup-btn-text",
+      name: "Button Text",
+      content: [t("Create Account")],
+      fontSize: 14,
+      fontWeight: 500,
+      color: white,
+      textAlign: "center",
+    }),
+  );
+
+  const signupBtn = add(
+    createFrame({
+      id: "signup-btn",
+      name: "Create Account Button",
+      children: [signupBtnText.id],
+      fill: solid(zinc950),
+      dimensions: { width: fill, height: fixed(40) },
+      borderRadius: radius(6),
+      layout: {
+        type: "stack",
+        direction: "horizontal",
+        gap: 0,
+        align: "center",
+        distribute: "center",
+      },
+    }),
+  );
+
+  const signupSignin = add(
+    createText({
+      id: "signup-signin",
+      name: "Sign In Link",
+      content: [t("Already have an account? Sign in")],
+      fontSize: 12,
+      color: zinc500,
+      textAlign: "center",
+    }),
+  );
+
+  const signupCard = add(
+    createFrame({
+      id: "signup-card",
+      name: "Card",
+      children: [
+        signupTitle.id,
+        signupDesc.id,
+        signupName.label.id,
+        signupName.input.id,
+        signupEmail.label.id,
+        signupEmail.input.id,
+        signupPass.label.id,
+        signupPass.input.id,
+        signupBtn.id,
+        signupSignin.id,
+      ],
+      fill: solid(white),
+      dimensions: { width: fixed(340), height: hug },
+      layout: {
+        type: "stack",
+        direction: "vertical",
+        gap: 16,
+        align: "start",
+        distribute: "start",
+      },
+      padding: pad(32, 24),
+      borderRadius: radius(12),
+      borders: allBorders,
+      shadow: {
+        color: { r: 0, g: 0, b: 0, a: 0.08 },
+        x: 0,
+        y: 2,
+        blur: 8,
+        spread: 0,
+      },
+    }),
+  );
+
+  const signupBody = add(
+    createFrame({
+      id: "signup-body",
+      name: "Body",
+      children: [signupCard.id],
+      dimensions: { width: fill, height: fill },
+      fill: solid(zinc100),
+      layout: {
+        type: "stack",
+        direction: "vertical",
+        gap: 0,
+        align: "center",
+        distribute: "center",
+      },
+    }),
+  );
+
+  const signupRoot = add(
+    createFrame({
+      id: "signup-root",
+      name: "Signup Root",
+      children: [signupHeader.id, signupBody.id],
+      fill: solid(zinc100),
+      dimensions: { width: fill, height: fill },
+      layout: {
+        type: "stack",
+        direction: "vertical",
+        gap: 0,
+        align: "start",
+        distribute: "start",
+      },
+    }),
+  );
+
+  add(
+    createScreen({
+      id: "screen-signup",
+      name: "Sign Up",
+      x: 590,
+      y: 100,
+      width: 390,
+      height: 844,
+      fill: solid(zinc100),
+      children: [signupRoot.id],
+    }),
+  );
+
+  return { nodes, children: ["screen-login", "screen-signup"] };
 }
 
-export function getPage(_docId: string, pageId: string) {
-  return mockPages.find((p) => p.id === pageId);
+// ── Page 2: Dashboard ──────────────────────────────────────────────
+
+function buildDashboardPage(): {
+  nodes: Record<string, Node>;
+  children: string[];
+} {
+  const nodes: Record<string, Node> = {};
+  function add<T extends Node>(node: T) {
+    nodes[node.id] = node;
+    return node;
+  }
+
+  // -- Sidebar --
+
+  const sidebarLogo = add(
+    createText({
+      id: "dash-logo",
+      name: "Logo",
+      content: [t("Acme Inc")],
+      fontSize: 16,
+      fontWeight: 700,
+      color: white,
+    }),
+  );
+
+  function navItem(id: string, label: string, active: boolean) {
+    const text = add(
+      createText({
+        id: `${id}-text`,
+        name: "Text",
+        content: [t(label)],
+        fontSize: 14,
+        fontWeight: active ? 500 : 400,
+        color: active ? zinc50 : zinc400,
+      }),
+    );
+    return add(
+      createFrame({
+        id,
+        name: `Nav - ${label}`,
+        children: [text.id],
+        ...(active ? { fill: solid({ r: 39, g: 39, b: 42, a: 1 }) } : {}),
+        dimensions: { width: fill, height: fixed(36) },
+        padding: pad(0, 12),
+        borderRadius: radius(6),
+        layout: {
+          type: "stack",
+          direction: "horizontal",
+          gap: 0,
+          align: "center",
+          distribute: "start",
+        },
+      }),
+    );
+  }
+
+  const nav1 = navItem("dash-nav-1", "Dashboard", true);
+  const nav2 = navItem("dash-nav-2", "Customers", false);
+  const nav3 = navItem("dash-nav-3", "Products", false);
+  const nav4 = navItem("dash-nav-4", "Settings", false);
+
+  const navGroup = add(
+    createFrame({
+      id: "dash-nav",
+      name: "Navigation",
+      children: [nav1.id, nav2.id, nav3.id, nav4.id],
+      dimensions: { width: fill, height: hug },
+      layout: {
+        type: "stack",
+        direction: "vertical",
+        gap: 4,
+        align: "start",
+        distribute: "start",
+      },
+    }),
+  );
+
+  const sidebar = add(
+    createFrame({
+      id: "dash-sidebar",
+      name: "Sidebar",
+      children: [sidebarLogo.id, navGroup.id],
+      fill: solid(zinc950),
+      dimensions: { width: fixed(240), height: fill },
+      layout: {
+        type: "stack",
+        direction: "vertical",
+        gap: 24,
+        align: "start",
+        distribute: "start",
+      },
+      padding: pad(20, 16),
+    }),
+  );
+
+  // -- Top bar --
+
+  const topbarTitle = add(
+    createText({
+      id: "dash-topbar-title",
+      name: "Title",
+      content: [t("Dashboard")],
+      fontSize: 16,
+      fontWeight: 600,
+      color: zinc950,
+    }),
+  );
+
+  const topbar = add(
+    createFrame({
+      id: "dash-topbar",
+      name: "Top Bar",
+      children: [topbarTitle.id],
+      fill: solid(white),
+      dimensions: { width: fill, height: fixed(56) },
+      padding: pad(0, 24),
+      borders: bottomBorder,
+      layout: {
+        type: "stack",
+        direction: "horizontal",
+        gap: 0,
+        align: "center",
+        distribute: "start",
+      },
+    }),
+  );
+
+  // -- Stats --
+
+  function statCard(id: string, label: string, value: string) {
+    const lbl = add(
+      createText({
+        id: `${id}-label`,
+        name: "Label",
+        content: [t(label)],
+        fontSize: 12,
+        color: zinc500,
+      }),
+    );
+    const val = add(
+      createText({
+        id: `${id}-value`,
+        name: "Value",
+        content: [t(value)],
+        fontSize: 28,
+        fontWeight: 600,
+        color: zinc950,
+        letterSpacing: -0.5,
+      }),
+    );
+    return add(
+      createFrame({
+        id,
+        name: label,
+        children: [lbl.id, val.id],
+        fill: solid(white),
+        dimensions: { width: fill, height: hug },
+        layout: {
+          type: "stack",
+          direction: "vertical",
+          gap: 4,
+          align: "start",
+          distribute: "start",
+        },
+        padding: pad(20, 20),
+        borderRadius: radius(8),
+        borders: allBorders,
+      }),
+    );
+  }
+
+  const stat1 = statCard("dash-stat-1", "Total Revenue", "$45,231");
+  const stat2 = statCard("dash-stat-2", "Customers", "+2,350");
+  const stat3 = statCard("dash-stat-3", "Active Now", "+573");
+
+  const statsRow = add(
+    createFrame({
+      id: "dash-stats",
+      name: "Stats Row",
+      children: [stat1.id, stat2.id, stat3.id],
+      dimensions: { width: fill, height: hug },
+      layout: {
+        type: "stack",
+        direction: "horizontal",
+        gap: 16,
+        align: "start",
+        distribute: "start",
+      },
+    }),
+  );
+
+  // -- Table --
+
+  function tableRow(
+    id: string,
+    name: string,
+    status: string,
+    statusColor: Color,
+    amount: string,
+    hasBorder: boolean,
+  ) {
+    const nameText = add(
+      createText({
+        id: `${id}-name`,
+        name: "Name",
+        content: [t(name)],
+        fontSize: 14,
+        color: zinc950,
+      }),
+    );
+    const statusText = add(
+      createText({
+        id: `${id}-status`,
+        name: "Status",
+        content: [t(status)],
+        fontSize: 12,
+        color: statusColor,
+      }),
+    );
+    const spacer = add(
+      createFrame({
+        id: `${id}-spacer`,
+        name: "Spacer",
+        dimensions: { width: fill, height: hug },
+        children: [statusText.id],
+      }),
+    );
+    const amountText = add(
+      createText({
+        id: `${id}-amount`,
+        name: "Amount",
+        content: [t(amount)],
+        fontSize: 14,
+        color: zinc950,
+        textAlign: "end",
+      }),
+    );
+    return add(
+      createFrame({
+        id,
+        name,
+        children: [nameText.id, spacer.id, amountText.id],
+        dimensions: { width: fill, height: fixed(48) },
+        padding: pad(0, 20),
+        ...(hasBorder ? { borders: bottomBorder } : {}),
+        layout: {
+          type: "stack",
+          direction: "horizontal",
+          gap: 0,
+          align: "center",
+          distribute: "start",
+        },
+      }),
+    );
+  }
+
+  const tableTitle = add(
+    createText({
+      id: "dash-table-title",
+      name: "Title",
+      content: [t("Recent Orders")],
+      fontSize: 16,
+      fontWeight: 600,
+      color: zinc950,
+    }),
+  );
+
+  const tableHeader = add(
+    createFrame({
+      id: "dash-table-header",
+      name: "Table Header",
+      children: [tableTitle.id],
+      dimensions: { width: fill, height: hug },
+      padding: pad(16, 20),
+      borders: bottomBorder,
+    }),
+  );
+
+  // Column headers
+  const thCustomer = add(
+    createText({
+      id: "dash-th-customer",
+      name: "Customer",
+      content: [t("Customer")],
+      fontSize: 12,
+      color: zinc500,
+    }),
+  );
+  const thStatusText = add(
+    createText({
+      id: "dash-th-status-text",
+      name: "Status",
+      content: [t("Status")],
+      fontSize: 12,
+      color: zinc500,
+    }),
+  );
+  const thStatusSpacer = add(
+    createFrame({
+      id: "dash-th-status",
+      name: "Spacer",
+      dimensions: { width: fill, height: hug },
+      children: [thStatusText.id],
+    }),
+  );
+  const thAmount = add(
+    createText({
+      id: "dash-th-amount",
+      name: "Amount",
+      content: [t("Amount")],
+      fontSize: 12,
+      color: zinc500,
+      textAlign: "end",
+    }),
+  );
+
+  const colHeaders = add(
+    createFrame({
+      id: "dash-col-headers",
+      name: "Column Headers",
+      children: [thCustomer.id, thStatusSpacer.id, thAmount.id],
+      fill: solid(zinc100),
+      dimensions: { width: fill, height: fixed(40) },
+      padding: pad(0, 20),
+      layout: {
+        type: "stack",
+        direction: "horizontal",
+        gap: 0,
+        align: "center",
+        distribute: "start",
+      },
+    }),
+  );
+
+  const row1 = tableRow(
+    "dash-r1",
+    "Olivia Martin",
+    "Completed",
+    green600,
+    "$1,999.00",
+    true,
+  );
+  const row2 = tableRow(
+    "dash-r2",
+    "Jackson Lee",
+    "Processing",
+    amber500,
+    "$39.00",
+    true,
+  );
+  const row3 = tableRow(
+    "dash-r3",
+    "Isabella Nguyen",
+    "Completed",
+    green600,
+    "$299.00",
+    false,
+  );
+
+  const tableCard = add(
+    createFrame({
+      id: "dash-table",
+      name: "Recent Orders",
+      children: [
+        tableHeader.id,
+        colHeaders.id,
+        row1.id,
+        row2.id,
+        row3.id,
+      ],
+      fill: solid(white),
+      dimensions: { width: fill, height: hug },
+      layout: {
+        type: "stack",
+        direction: "vertical",
+        gap: 0,
+        align: "start",
+        distribute: "start",
+      },
+      borderRadius: radius(8),
+      borders: allBorders,
+    }),
+  );
+
+  // -- Content area --
+
+  const content = add(
+    createFrame({
+      id: "dash-content",
+      name: "Content",
+      children: [statsRow.id, tableCard.id],
+      dimensions: { width: fill, height: fill },
+      layout: {
+        type: "stack",
+        direction: "vertical",
+        gap: 24,
+        align: "start",
+        distribute: "start",
+      },
+      padding: pad(24, 24),
+    }),
+  );
+
+  const main = add(
+    createFrame({
+      id: "dash-main",
+      name: "Main Content",
+      children: [topbar.id, content.id],
+      fill: solid(white),
+      dimensions: { width: fill, height: fill },
+      layout: {
+        type: "stack",
+        direction: "vertical",
+        gap: 0,
+        align: "start",
+        distribute: "start",
+      },
+    }),
+  );
+
+  const root = add(
+    createFrame({
+      id: "dash-root",
+      name: "Dashboard Root",
+      children: [sidebar.id, main.id],
+      dimensions: { width: fill, height: fill },
+      layout: {
+        type: "stack",
+        direction: "horizontal",
+        gap: 0,
+        align: "start",
+        distribute: "start",
+      },
+    }),
+  );
+
+  add(
+    createScreen({
+      id: "screen-dash",
+      name: "Dashboard",
+      x: 100,
+      y: 100,
+      width: 1280,
+      height: 800,
+      fill: solid(zinc100),
+      children: [root.id],
+    }),
+  );
+
+  return { nodes, children: ["screen-dash"] };
+}
+
+// ── Data store ─────────────────────────────────────────────────────
+
+const auth = buildAuthPage();
+const dashboard = buildDashboardPage();
+
+const pages: Record<string, Record<string, Page>> = {
+  "doc-1": {
+    "page-auth": {
+      id: "page-auth",
+      name: "Auth Flow",
+      nodes: auth.nodes,
+      children: auth.children,
+    },
+    "page-dashboard": {
+      id: "page-dashboard",
+      name: "Dashboard",
+      nodes: dashboard.nodes,
+      children: dashboard.children,
+    },
+  },
+};
+
+const documents: Record<string, Document> = {
+  "doc-1": {
+    id: "doc-1",
+    name: "Acme App",
+    pages: [
+      { id: "page-auth", name: "Auth Flow" },
+      { id: "page-dashboard", name: "Dashboard" },
+    ],
+  },
+};
+
+// ── Public API ─────────────────────────────────────────────────────
+
+export function getDocument(docId: string): Document {
+  const doc = documents[docId];
+  if (!doc) throw new Error(`Document "${docId}" not found`);
+  return doc;
+}
+
+export function getPage(docId: string, pageId: string): Page | undefined {
+  return pages[docId]?.[pageId];
 }
