@@ -15,7 +15,7 @@ import {
   type TextRunStyle,
   textRunStyle,
   type TextStyle,
-} from "@opendesigner/core";
+} from "@dashedhq/core";
 import {
   type AttributeSpec,
   type Mark,

@@ -1,5 +1,5 @@
 {
-  "name": "opendesigner",
+  "name": "dashed",
   "private": true,
   "scripts": {
     "test": "pnpm -r run test",

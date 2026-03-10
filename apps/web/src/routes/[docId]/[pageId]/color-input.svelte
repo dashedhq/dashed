@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { type Color, colorToCss, colorToHex } from "@opendesigner/core";
+  import { type Color, colorToCss, colorToHex } from "@dashedhq/core";
   import { Popover } from "bits-ui";
 
   import { cn } from "$lib/utils";

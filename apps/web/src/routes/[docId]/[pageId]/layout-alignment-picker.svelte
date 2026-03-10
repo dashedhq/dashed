@@ -12,7 +12,7 @@
     Layout,
     StackAlignment,
     StackDistribution,
-  } from "@opendesigner/core";
+  } from "@dashedhq/core";
   import { ToggleGroup } from "bits-ui";
 
   import { cn } from "$lib/utils";

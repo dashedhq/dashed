@@ -1,6 +1,6 @@
 <script lang="ts">
   import { Grid2x2Icon, MoveDownIcon, MoveRightIcon } from "@lucide/svelte";
-  import type { Layout } from "@opendesigner/core";
+  import type { Layout } from "@dashedhq/core";
   import { ToggleGroup } from "bits-ui";
 
   type Props = {

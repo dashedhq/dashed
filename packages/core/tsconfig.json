@@ -1,4 +1,4 @@
 {
-  "extends": "@opendesigner/tsconfig/base",
+  "extends": "@dashedhq/tsconfig/base",
   "include": ["src"]
 }

@@ -13,7 +13,7 @@
     type ResolvedTextStyle,
     type TextNode,
     type TextStyle,
-  } from "@opendesigner/core";
+  } from "@dashedhq/core";
   import { ToggleGroup } from "bits-ui";
   import type { EditorState } from "prosemirror-state";
   import type { EditorView } from "prosemirror-view";

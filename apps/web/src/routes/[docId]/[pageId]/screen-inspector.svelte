@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { ScreenNode } from "@opendesigner/core";
+  import type { ScreenNode } from "@dashedhq/core";
 
   import FillPicker from "./fill-picker.svelte";
 

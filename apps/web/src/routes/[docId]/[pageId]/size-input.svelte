@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { Size } from "@opendesigner/core";
+  import type { Size } from "@dashedhq/core";
   import { Select } from "bits-ui";
 
   type Props = {

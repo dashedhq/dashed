@@ -5,7 +5,7 @@
     type Node,
     type Page,
     resolveChildren,
-  } from "@opendesigner/core";
+  } from "@dashedhq/core";
 
   import { resolve } from "$app/paths";
   import {

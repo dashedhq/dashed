@@ -1,9 +1,5 @@
 <script lang="ts">
-  import {
-    type Fill,
-    fillStyle,
-    colorToHex,
-  } from "@opendesigner/core";
+  import { type Fill, fillStyle, colorToHex } from "@dashedhq/core";
   import { Popover } from "bits-ui";
 
   import {
@@ -35,8 +31,7 @@
       <span
         class="absolute inset-0 bg-[repeating-conic-gradient(var(--color-neutral-600)_0%_25%,transparent_0%_50%)]"
       ></span>
-      <span class="absolute inset-0 z-10" style={fillStyle(value)}>
-      </span>
+      <span class="absolute inset-0 z-10" style={fillStyle(value)}> </span>
     </span>
     {#if value.type === "solid"}
       {colorToHex(value.color)}

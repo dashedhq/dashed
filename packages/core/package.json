@@ -1,5 +1,5 @@
 {
-  "name": "@opendesigner/core",
+  "name": "@dashedhq/core",
   "version": "0.0.0",
   "private": true,
   "type": "module",
@@ -13,8 +13,8 @@
     "format": "prettier --write ."
   },
   "devDependencies": {
-    "@opendesigner/eslint-config": "workspace:*",
-    "@opendesigner/tsconfig": "workspace:*",
+    "@dashedhq/eslint-config": "workspace:*",
+    "@dashedhq/tsconfig": "workspace:*",
     "@types/node": "^22",
     "eslint": "^9.39.1",
     "prettier": "^3.8.1",

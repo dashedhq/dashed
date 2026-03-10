@@ -1,6 +1,6 @@
 <script lang="ts">
   import { FrameIcon, SmartphoneIcon, TypeIcon } from "@lucide/svelte";
-  import type { Node } from "@opendesigner/core";
+  import type { Node } from "@dashedhq/core";
   import type { EditorState } from "prosemirror-state";
   import type { EditorView } from "prosemirror-view";
 

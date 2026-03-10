@@ -5,7 +5,7 @@
     colorToHex,
     colorToHsva,
     hsvaToColor,
-  } from "@opendesigner/core";
+  } from "@dashedhq/core";
   import { Slider } from "bits-ui";
   import { untrack } from "svelte";
 

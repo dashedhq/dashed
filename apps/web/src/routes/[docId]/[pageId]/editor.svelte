@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { Document, Page } from "@opendesigner/core";
+  import type { Document, Page } from "@dashedhq/core";
   import type { EditorState } from "prosemirror-state";
   import { EditorView } from "prosemirror-view";
 

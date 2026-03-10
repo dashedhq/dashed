@@ -6,7 +6,7 @@ import {
   createFrame,
   createScreen,
   createText,
-} from "@opendesigner/core";
+} from "@dashedhq/core";
 
 // -- Zinc palette (shadcn/ui) --
 
@@ -912,13 +912,7 @@ function buildDashboardPage(): {
     createFrame({
       id: "dash-table",
       name: "Recent Orders",
-      children: [
-        tableHeader.id,
-        colHeaders.id,
-        row1.id,
-        row2.id,
-        row3.id,
-      ],
+      children: [tableHeader.id, colHeaders.id, row1.id, row2.id, row3.id],
       fill: solid(white),
       dimensions: { width: fill, height: hug },
       layout: {

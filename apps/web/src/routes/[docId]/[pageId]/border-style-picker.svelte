@@ -1,6 +1,6 @@
 <script lang="ts">
   import { SplineIcon, SquareDashedIcon, SquareIcon } from "@lucide/svelte";
-  import type { BorderStyle } from "@opendesigner/core";
+  import type { BorderStyle } from "@dashedhq/core";
   import { ToggleGroup } from "bits-ui";
 
   type Props = {
