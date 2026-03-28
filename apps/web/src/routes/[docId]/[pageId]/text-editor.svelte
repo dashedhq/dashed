@@ -3,10 +3,27 @@
   import { baseKeymap } from "prosemirror-commands";
   import { history, redo, undo } from "prosemirror-history";
   import { keymap } from "prosemirror-keymap";
-  import { EditorState } from "prosemirror-state";
-  import { EditorView } from "prosemirror-view";
+  import { EditorState, Plugin } from "prosemirror-state";
+  import { Decoration, DecorationSet, EditorView } from "prosemirror-view";
 
-  import { nodeToDoc, selectionHighlightPlugin } from "./prosemirror";
+  import { nodeToDoc } from "./editor-state.svelte";
+
+  const selectionHighlightPlugin = new Plugin({
+    props: {
+      decorations(state) {
+        const { from, to, empty } = state.selection;
+        if (empty) {
+          return DecorationSet.empty;
+        }
+        return DecorationSet.create(state.doc, [
+          Decoration.inline(from, to, {
+            style:
+              "background-color: color-mix(in oklch, var(--color-blue-500) 30%, transparent)",
+          }),
+        ]);
+      },
+    },
+  });
 
   type Props = {
     node: TextNode;
@@ -41,7 +58,9 @@
     const view = new EditorView(containerEl, {
       state,
       dispatchTransaction(tr) {
-        if (view.isDestroyed) return;
+        if (view.isDestroyed) {
+          return;
+        }
         const newState = view.state.apply(tr);
         view.updateState(newState);
         onStateChange(newState);

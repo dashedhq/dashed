@@ -1,3 +1,5 @@
+import { round } from "../utils/math";
+
 export type Color = {
   r: number;
   g: number;
@@ -29,7 +31,9 @@ export function colorToCss(c: Color) {
 
 export function tryCssToColor(s: string): Color | null {
   const m = s.match(/rgba?\((\d+),(\d+),(\d+),([\d.]+)\)/);
-  if (!m) return null;
+  if (!m) {
+    return null;
+  }
   return {
     r: parseInt(m[1]),
     g: parseInt(m[2]),
@@ -49,7 +53,9 @@ export function cssToColor(s: string) {
 
 export function tryHexToColor(hex: string): Color | null {
   const match = hex.match(/^#?([0-9a-fA-F]{6})$/);
-  if (!match) return null;
+  if (!match) {
+    return null;
+  }
   const h = match[1];
   return {
     r: parseInt(h.slice(0, 2), 16),
@@ -79,15 +85,21 @@ export function colorToHsva(c: Color): Hsva {
 
   let h = 0;
   if (d !== 0) {
-    if (max === r) h = ((g - b) / d) % 6;
-    else if (max === g) h = (b - r) / d + 2;
-    else h = (r - g) / d + 4;
-    h = Math.round(h * 60);
-    if (h < 0) h += 360;
+    if (max === r) {
+      h = ((g - b) / d) % 6;
+    } else if (max === g) {
+      h = (b - r) / d + 2;
+    } else {
+      h = (r - g) / d + 4;
+    }
+    h = round(h * 60, 0);
+    if (h < 0) {
+      h += 360;
+    }
   }
 
-  const s = max === 0 ? 0 : (d / max) * 100;
-  const v = max * 100;
+  const s = round(max === 0 ? 0 : (d / max) * 100, 0);
+  const v = round(max * 100, 0);
 
   return { h, s, v, a: c.a };
 }
@@ -125,9 +137,9 @@ export function hsvaToColor(hsva: Hsva): Color {
   }
 
   return {
-    r: Math.round((r + m) * 255),
-    g: Math.round((g + m) * 255),
-    b: Math.round((b + m) * 255),
-    a: hsva.a,
+    r: round((r + m) * 255, 0),
+    g: round((g + m) * 255, 0),
+    b: round((b + m) * 255, 0),
+    a: round(hsva.a, 2),
   };
 }

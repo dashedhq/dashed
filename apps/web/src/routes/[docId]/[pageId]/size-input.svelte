@@ -5,9 +5,13 @@
   type Props = {
     notation: string;
     value: Size;
+    resolvedValue?: number;
+    onValueChange: (v: Size) => void;
   };
 
-  const { value = $bindable(), notation }: Props = $props();
+  const { value, resolvedValue, onValueChange, notation }: Props = $props();
+
+  const round1dp = (v: number) => Math.round(v * 10) / 10;
 
   const sizeTypeDisplay = (type: Size["type"]) => {
     if (type === "fixed") {
@@ -23,25 +27,46 @@
     }
   };
 
-  let lastFixedValue = $state(value.type === "fixed" ? value.value : 0);
+  const displayValue = $derived(
+    value.type === "fixed"
+      ? round1dp(value.value)
+      : resolvedValue != null
+        ? round1dp(resolvedValue)
+        : null,
+  );
 
-  $effect(() => {
-    if (value.type === "fixed") {
-      lastFixedValue = value.value;
-    }
-  });
+  let draftValue = $derived(displayValue?.toString() ?? "");
 </script>
 
 <div
   class="text-neutral-50 text-sm border border-neutral-700 rounded-md px-2 h-8 flex items-center gap-2 focus-within:border-blue-500"
 >
   <div class="text-neutral-400">{notation}</div>
-  {#if value.type === "fixed"}
-    <input class="min-w-0 flex-1 outline-none" bind:value={value.value} />
-  {:else}
-    <div class="flex-1 text-neutral-600">{lastFixedValue}</div>
-  {/if}
-  <Select.Root type="single" bind:value={value.type}>
+  <input
+    class="min-w-0 flex-1 outline-none disabled:text-neutral-500"
+    disabled={value.type !== "fixed"}
+    bind:value={draftValue}
+    onblur={() => {
+      const parsed = draftValue.trim() === "" ? null : parseFloat(draftValue);
+      if (parsed !== null && !Number.isNaN(parsed) && parsed >= 0) {
+        onValueChange({ type: "fixed", value: round1dp(parsed) });
+      }
+      // Sync display back to model — needed when the parent normalizes
+      // the value back to the same number (e.g. rounding), since the
+      // derived won't re-run if value didn't change.
+      draftValue = displayValue?.toString() ?? "";
+    }}
+  />
+  <Select.Root
+    type="single"
+    value={value.type}
+    onValueChange={(type) =>
+      onValueChange(
+        type === "fixed"
+          ? { type: "fixed", value: displayValue ?? 0 }
+          : ({ type } as Size),
+      )}
+  >
     <Select.Trigger
       class="cursor-pointer text-neutral-400 text-xs bg-neutral-800 w-10 rounded-sm h-5 flex items-center justify-center"
     >

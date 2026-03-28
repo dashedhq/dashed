@@ -161,8 +161,8 @@ describe("colorToHsva / hsvaToColor roundtrip", () => {
     const red = { r: 255, g: 0, b: 0, a: 1 };
     const hsva = colorToHsva(red);
     expect(hsva.h).toBe(0);
-    expect(hsva.s).toBeCloseTo(100);
-    expect(hsva.v).toBeCloseTo(100);
+    expect(hsva.s).toBe(100);
+    expect(hsva.v).toBe(100);
     expect(hsvaToColor(hsva)).toEqual(red);
   });
 
@@ -192,7 +192,7 @@ describe("colorToHsva / hsvaToColor roundtrip", () => {
     const white = { r: 255, g: 255, b: 255, a: 1 };
     const hsva = colorToHsva(white);
     expect(hsva.s).toBe(0);
-    expect(hsva.v).toBeCloseTo(100);
+    expect(hsva.v).toBe(100);
     expect(hsvaToColor(hsva)).toEqual(white);
   });
 
@@ -201,5 +201,18 @@ describe("colorToHsva / hsvaToColor roundtrip", () => {
     const hsva = colorToHsva(c);
     expect(hsva.a).toBe(0.7);
     expect(hsvaToColor(hsva).a).toBe(0.7);
+  });
+
+  test("colorToHsva rounds h/s/v to integers", () => {
+    // r:100 g:150 b:200 would produce s=50.000... and v=78.431...
+    const hsva = colorToHsva({ r: 100, g: 150, b: 200, a: 1 });
+    expect(Number.isInteger(hsva.h)).toBe(true);
+    expect(Number.isInteger(hsva.s)).toBe(true);
+    expect(Number.isInteger(hsva.v)).toBe(true);
+  });
+
+  test("hsvaToColor rounds alpha to 2dp", () => {
+    const color = hsvaToColor({ h: 210, s: 50, v: 78, a: 0.333333 });
+    expect(color.a).toBe(0.33);
   });
 });

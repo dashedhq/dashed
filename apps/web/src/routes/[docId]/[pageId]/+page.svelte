@@ -5,14 +5,8 @@
   import Editor from "./editor.svelte";
 
   let { data }: PageProps = $props();
-
-  let pageData = $state(data.page);
-
-  $effect(() => {
-    pageData = data.page;
-  });
 </script>
 
 {#key page.url.pathname}
-  <Editor document={data.document} bind:page={pageData} />
+  <Editor document={data.document} page={data.page} />
 {/key}

@@ -22,9 +22,20 @@
     "value" | "type" | "onValueChange"
   > & {
     value: Layout;
+    onValueChange: (v: Layout) => void;
   };
 
-  const { value = $bindable(), class: className, ...others }: Props = $props();
+  const { value, onValueChange, class: className, ...others }: Props = $props();
+
+  const toggleValue = $derived.by(() => {
+    if (value.type === "stack" && value.direction === "horizontal") {
+      return `${value.distribute}-${value.align}`;
+    }
+    if (value.type === "stack" && value.direction === "vertical") {
+      return `${value.align}-${value.distribute}`;
+    }
+    return "start-start";
+  });
 </script>
 
 <ToggleGroup.Root
@@ -33,31 +44,23 @@
     "grid grid-cols-3 grid-rows-3 bg-neutral-800 rounded-md text-sm",
     className,
   )}
-  bind:value={
-    () => {
-      if (value.type === "stack" && value.direction === "horizontal") {
-        return `${value.distribute}-${value.align}`;
-      }
-
-      if (value.type === "stack" && value.direction === "vertical") {
-        return `${value.align}-${value.distribute}`;
-      }
-
-      return "start-start";
-    },
-    (v) => {
-      const [first, second] = v.split("-");
-      if (value.type === "stack" && value.direction === "horizontal") {
-        value.distribute = first as StackDistribution;
-        value.align = second as StackAlignment;
-      }
-
-      if (value.type === "stack" && value.direction === "vertical") {
-        value.align = first as StackAlignment;
-        value.distribute = second as StackDistribution;
-      }
+  value={toggleValue}
+  onValueChange={(v) => {
+    const [first, second] = v.split("-");
+    if (value.type === "stack" && value.direction === "horizontal") {
+      onValueChange({
+        ...value,
+        distribute: first as StackDistribution,
+        align: second as StackAlignment,
+      });
+    } else if (value.type === "stack" && value.direction === "vertical") {
+      onValueChange({
+        ...value,
+        align: first as StackAlignment,
+        distribute: second as StackDistribution,
+      });
     }
-  }
+  }}
   {...others}
 >
   <ToggleGroup.Item

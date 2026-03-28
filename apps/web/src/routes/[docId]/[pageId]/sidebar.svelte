@@ -1,10 +1,5 @@
 <script lang="ts">
-  import {
-    type Document,
-    type Node,
-    type Page,
-    resolveChildren,
-  } from "@dashedhq/core";
+  import type { Node } from "@dashedhq/core";
   import { FrameIcon, SmartphoneIcon, TypeIcon } from "@lucide/svelte";
 
   import { resolve } from "$app/paths";
@@ -21,22 +16,16 @@
     TabsTrigger,
   } from "$lib/components/ui/tabs";
 
-  type Props = {
-    document: Document;
-    page: Page;
-    selection: string | null;
-  };
+  import { getEditorState } from "./editor-state.svelte";
 
-  let { document, page, selection = $bindable() }: Props = $props();
+  const editor = getEditorState();
 </script>
 
 {#snippet renderLayer(node: Node, depth: number)}
   <SidebarMenuItem role="treeitem">
     <SidebarMenuButton
-      active={selection === node.id}
-      onclick={() => {
-        selection = node.id;
-      }}
+      active={editor.selectedNode?.id === node.id}
+      onclick={() => editor.selectNode(node.id)}
       style="padding-left: {depth * 12 + 8}px"
     >
       {#if node.type === "screen"}
@@ -50,7 +39,7 @@
     </SidebarMenuButton>
   </SidebarMenuItem>
   {#if node.type === "screen" || node.type === "frame"}
-    {#each resolveChildren(page.nodes, node.children) as child (child.id)}
+    {#each editor.resolveChildren(node.children) as child (child.id)}
       {@render renderLayer(child, depth + 1)}
     {/each}
   {/if}
@@ -58,7 +47,7 @@
 
 <div class="w-64 flex flex-col gap-6">
   <div class="flex flex-col gap-1 px-2">
-    <div class="text-neutral-50">{document.name}</div>
+    <div class="text-neutral-50">{editor.document.name}</div>
   </div>
   <TabsRoot value="pages" class="gap-4 flex-1 overflow-hidden">
     <TabsList>
@@ -67,11 +56,11 @@
     </TabsList>
     <TabsContent value="pages" class="flex flex-col gap-1 overflow-auto">
       <SidebarMenu role="tablist">
-        {#each document.pages as pg (pg.id)}
+        {#each editor.document.pages as pg (pg.id)}
           <SidebarMenuItem role="presentation">
             <SidebarMenuLink
-              active={page.id === pg.id}
-              href={resolve(`/${document.id}/${pg.id}`)}
+              active={editor.pageId === pg.id}
+              href={resolve(`/${editor.document.id}/${pg.id}`)}
             >
               {pg.name}
             </SidebarMenuLink>
@@ -81,7 +70,7 @@
     </TabsContent>
     <TabsContent value="layers" class="flex flex-col gap-1 overflow-auto">
       <SidebarMenu role="tree">
-        {#each resolveChildren(page.nodes, page.children) as node (node.id)}
+        {#each editor.topLevelNodes as node (node.id)}
           {@render renderLayer(node, 0)}
         {/each}
       </SidebarMenu>

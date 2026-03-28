@@ -1,6 +1,12 @@
 import { describe, expect, test } from "vitest";
 
-import { dimensionsStyle, layoutStyle, paddingStyle } from "./layout";
+import {
+  dimensionsStyle,
+  layoutStyle,
+  overflowStyle,
+  paddingStyle,
+  positionStyle,
+} from "./layout";
 
 describe("layoutStyle", () => {
   test("vertical stack", () => {
@@ -66,12 +72,20 @@ describe("layoutStyle", () => {
   });
 });
 
+const noConstraints = {
+  minWidth: 0,
+  maxWidth: "none",
+  minHeight: 0,
+  maxHeight: "none",
+} as const;
+
 describe("dimensionsStyle", () => {
   test("fixed dimensions", () => {
     expect(
       dimensionsStyle({
         width: { type: "fixed", value: 100 },
         height: { type: "fixed", value: 200 },
+        ...noConstraints,
       }),
     ).toBe("width: 100px; height: 200px");
   });
@@ -81,6 +95,7 @@ describe("dimensionsStyle", () => {
       dimensionsStyle({
         width: { type: "hug" },
         height: { type: "hug" },
+        ...noConstraints,
       }),
     ).toBe("width: fit-content; height: fit-content");
   });
@@ -90,6 +105,7 @@ describe("dimensionsStyle", () => {
       dimensionsStyle({
         width: { type: "fill" },
         height: { type: "fill" },
+        ...noConstraints,
       }),
     ).toBe("width: 100%; height: 100%");
   });
@@ -99,8 +115,22 @@ describe("dimensionsStyle", () => {
       dimensionsStyle({
         width: { type: "fixed", value: 300 },
         height: { type: "hug" },
+        ...noConstraints,
       }),
     ).toBe("width: 300px; height: fit-content");
+  });
+
+  test("min/max constraints", () => {
+    expect(
+      dimensionsStyle({
+        width: { type: "fill" },
+        height: { type: "fill" },
+        minWidth: 200,
+        maxWidth: 800,
+        minHeight: 0,
+        maxHeight: "none",
+      }),
+    ).toBe("width: 100%; height: 100%; min-width: 200px; max-width: 800px");
   });
 });
 
@@ -119,5 +149,45 @@ describe("paddingStyle", () => {
     expect(paddingStyle({ top: 8, right: 16, bottom: 24, left: 32 })).toBe(
       "padding: 8px 16px 24px 32px",
     );
+  });
+});
+
+describe("positionStyle", () => {
+  test("auto returns empty", () => {
+    expect(positionStyle({ type: "auto" })).toBe("");
+  });
+
+  test("absolute with insets", () => {
+    const result = positionStyle({
+      type: "absolute",
+      insets: { top: 10, right: "auto", bottom: "auto", left: 20 },
+    });
+    expect(result).toContain("position: absolute");
+    expect(result).toContain("top: 10px");
+    expect(result).toContain("left: 20px");
+    expect(result).not.toContain("right");
+    expect(result).not.toContain("bottom");
+  });
+
+  test("absolute with all auto insets", () => {
+    const result = positionStyle({
+      type: "absolute",
+      insets: { top: "auto", right: "auto", bottom: "auto", left: "auto" },
+    });
+    expect(result).toBe("position: absolute");
+  });
+});
+
+describe("overflowStyle", () => {
+  test("visible returns empty", () => {
+    expect(overflowStyle("visible")).toBe("");
+  });
+
+  test("hidden", () => {
+    expect(overflowStyle("hidden")).toBe("overflow: hidden");
+  });
+
+  test("scroll emits auto", () => {
+    expect(overflowStyle("scroll")).toBe("overflow: auto");
   });
 });

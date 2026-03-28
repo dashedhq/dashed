@@ -1,58 +1,27 @@
 <script lang="ts">
-  import type { Node } from "@dashedhq/core";
+  import type { Node, Size } from "@dashedhq/core";
+
+  import {
+    type CanvasMeasurements,
+    getEditorState,
+    type NodeMeasurements,
+  } from "./editor-state.svelte";
 
   type Props = {
-    canvasEl: HTMLDivElement;
     node: Node;
-    zoom: number;
-    panX: number;
-    panY: number;
+    nodeMeasurements: NodeMeasurements;
+    canvasMeasurements: CanvasMeasurements;
   };
 
-  let { canvasEl, node = $bindable(), zoom, panX, panY }: Props = $props();
+  let { node, nodeMeasurements, canvasMeasurements }: Props = $props();
+  const editor = getEditorState();
 
-  // -- Target element --
-
-  const targetEl = $derived(canvasEl.querySelector(`[data-id="${node.id}"]`));
-
-  // -- Selection rect --
-
-  type Rect = { x: number; y: number; w: number; h: number };
-  let selectionRect = $state<Rect | null>(null);
-
-  function computeRect(target: Element): Rect {
-    const canvasRect = canvasEl.getBoundingClientRect();
-    const targetRect = target.getBoundingClientRect();
-    return {
-      x: targetRect.left - canvasRect.left - canvasEl.clientLeft,
-      y: targetRect.top - canvasRect.top - canvasEl.clientTop,
-      w: targetRect.width,
-      h: targetRect.height,
-    };
-  }
-
-  // Recompute rect when pan/zoom changes or targetEl resizes
-  function updateRect() {
-    selectionRect = targetEl ? computeRect(targetEl) : null;
-  }
-
-  // Re-run on pan/zoom changes
-  $effect(() => {
-    /* eslint-disable @typescript-eslint/no-unused-expressions */
-    panX;
-    panY;
-    zoom;
-    /* eslint-enable @typescript-eslint/no-unused-expressions */
-    updateRect();
-  });
-
-  // Observe targetEl for size changes (only recreated when targetEl changes)
-  $effect(() => {
-    if (!targetEl) return;
-    const observer = new ResizeObserver(() => updateRect());
-    observer.observe(targetEl);
-    return () => observer.disconnect();
-  });
+  const overlay = $derived.by(() => ({
+    x: nodeMeasurements.boundingRect.x - canvasMeasurements.boundingRect.x - canvasMeasurements.clientLeft,
+    y: nodeMeasurements.boundingRect.y - canvasMeasurements.boundingRect.y - canvasMeasurements.clientTop,
+    width: nodeMeasurements.boundingRect.width,
+    height: nodeMeasurements.boundingRect.height,
+  }));
 
   // -- Resize --
 
@@ -92,184 +61,170 @@
     return resizesTop(h) || resizesBottom(h);
   }
 
-  function startResize(
-    e: PointerEvent & {
-      currentTarget: EventTarget & HTMLDivElement;
-    },
-    handle: ResizeHandle,
-  ) {
+  function startResize(e: PointerEvent, handle: ResizeHandle) {
     e.preventDefault();
     e.stopPropagation();
-    if (node.type !== "frame" && node.type !== "text") return;
+    if (node.type !== "frame" && node.type !== "text") {
+      return;
+    }
 
     // Convert hug/fill to fixed using current rendered size
-    if (
-      resizesX(handle) &&
-      node.dimensions.width.type !== "fixed" &&
-      targetEl
-    ) {
-      node.dimensions.width = {
-        type: "fixed",
-        value: targetEl.getBoundingClientRect().width / zoom,
-      };
+    if (resizesX(handle) && node.dimensions.width.type !== "fixed") {
+      editor.resizeNode(node.id, {
+        width: { type: "fixed", value: nodeMeasurements.offsetWidth },
+      });
     }
-    if (
-      resizesY(handle) &&
-      node.dimensions.height.type !== "fixed" &&
-      targetEl
-    ) {
-      node.dimensions.height = {
-        type: "fixed",
-        value: targetEl.getBoundingClientRect().height / zoom,
-      };
+    if (resizesY(handle) && node.dimensions.height.type !== "fixed") {
+      editor.resizeNode(node.id, {
+        height: { type: "fixed", value: nodeMeasurements.offsetHeight },
+      });
     }
 
     resizeHandle = handle;
-    e.currentTarget.setPointerCapture(e.pointerId);
+    editor.beginPatch();
+    (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
   }
 
   function handleResizeMove(e: PointerEvent) {
-    if (!resizeHandle || (node.type !== "frame" && node.type !== "text"))
+    if (!resizeHandle || (node.type !== "frame" && node.type !== "text")) {
       return;
+    }
 
-    const dx = e.movementX / zoom;
-    const dy = e.movementY / zoom;
+    const dx = e.movementX / editor.zoom;
+    const dy = e.movementY / editor.zoom;
+    const { width, height } = node.dimensions;
+    const size: { width?: Size; height?: Size } = {};
 
-    if (resizesRight(resizeHandle) && node.dimensions.width.type === "fixed") {
-      node.dimensions.width.value = Math.max(
-        1,
-        node.dimensions.width.value + dx,
-      );
+    if (resizesRight(resizeHandle) && width.type === "fixed") {
+      size.width = { type: "fixed", value: Math.max(1, width.value + dx) };
     }
-    if (resizesLeft(resizeHandle) && node.dimensions.width.type === "fixed") {
-      node.dimensions.width.value = Math.max(
-        1,
-        node.dimensions.width.value - dx,
-      );
+    if (resizesLeft(resizeHandle) && width.type === "fixed") {
+      size.width = { type: "fixed", value: Math.max(1, width.value - dx) };
     }
-    if (
-      resizesBottom(resizeHandle) &&
-      node.dimensions.height.type === "fixed"
-    ) {
-      node.dimensions.height.value = Math.max(
-        1,
-        node.dimensions.height.value + dy,
-      );
+    if (resizesBottom(resizeHandle) && height.type === "fixed") {
+      size.height = { type: "fixed", value: Math.max(1, height.value + dy) };
     }
-    if (resizesTop(resizeHandle) && node.dimensions.height.type === "fixed") {
-      node.dimensions.height.value = Math.max(
-        1,
-        node.dimensions.height.value - dy,
-      );
+    if (resizesTop(resizeHandle) && height.type === "fixed") {
+      size.height = { type: "fixed", value: Math.max(1, height.value - dy) };
     }
+
+    editor.resizeNode(node.id, size);
   }
 
-  function handleResizeEnd(
-    e: PointerEvent & { currentTarget: EventTarget & HTMLDivElement },
-  ) {
-    if (!resizeHandle) return;
+  function handleResizeEnd(e: PointerEvent) {
+    if (!resizeHandle) {
+      return;
+    }
     resizeHandle = null;
-    e.currentTarget.releasePointerCapture(e.pointerId);
+    editor.commitPatch();
+    (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId);
   }
 
   function resetToHug(e: MouseEvent, axis: "x" | "y") {
     e.preventDefault();
     e.stopPropagation();
-    if (node.type !== "frame" && node.type !== "text") return;
-    if (axis === "x") {
-      node.dimensions.width = { type: "hug" };
-    } else {
-      node.dimensions.height = { type: "hug" };
-    }
+    editor.resizeNode(
+      node.id,
+      axis === "x" ? { width: { type: "hug" } } : { height: { type: "hug" } },
+    );
   }
 
   const HANDLE_SIZE = 8;
   const EDGE_THICKNESS = 6;
+
+  const corners: { handle: ResizeHandle; x: number; y: number }[] = $derived([
+    { handle: "top-left", x: overlay.x, y: overlay.y },
+    {
+      handle: "top-right",
+      x: overlay.x + overlay.width,
+      y: overlay.y,
+    },
+    {
+      handle: "bottom-left",
+      x: overlay.x,
+      y: overlay.y + overlay.height,
+    },
+    {
+      handle: "bottom-right",
+      x: overlay.x + overlay.width,
+      y: overlay.y + overlay.height,
+    },
+  ]);
 </script>
 
-{#if selectionRect}
-  {@const s = selectionRect}
+<!-- Selection outline -->
+<div
+  class="absolute pointer-events-none z-10 outline-2 outline-blue-500"
+  style="left: {overlay.x}px; top: {overlay.y}px; width: {overlay.width}px; height: {overlay.height}px"
+></div>
 
-  <!-- Selection outline -->
-  <div
-    class="absolute pointer-events-none z-10 outline-2 outline-blue-500"
-    style="left: {s.x}px; top: {s.y}px; width: {s.w}px; height: {s.h}px"
-  ></div>
+{#if node.type === "frame" || node.type === "text"}
+  <!-- Edge hit areas -->
+  <button
+    aria-label="Resize top"
+    class="absolute z-20 cursor-ns-resize appearance-none bg-transparent border-none p-0"
+    style="left: {overlay.x + HANDLE_SIZE}px; top: {overlay.y -
+      EDGE_THICKNESS / 2}px; width: {overlay.width -
+      HANDLE_SIZE * 2}px; height: {EDGE_THICKNESS}px"
+    onclick={(e) => e.stopPropagation()}
+    onpointerdown={(e) => startResize(e, "top")}
+    onpointermove={handleResizeMove}
+    onpointerup={handleResizeEnd}
+    ondblclick={(e) => resetToHug(e, "y")}
+  ></button>
+  <button
+    aria-label="Resize bottom"
+    class="absolute z-20 cursor-ns-resize appearance-none bg-transparent border-none p-0"
+    style="left: {overlay.x + HANDLE_SIZE}px; top: {overlay.y +
+      overlay.height -
+      EDGE_THICKNESS / 2}px; width: {overlay.width -
+      HANDLE_SIZE * 2}px; height: {EDGE_THICKNESS}px"
+    onclick={(e) => e.stopPropagation()}
+    onpointerdown={(e) => startResize(e, "bottom")}
+    onpointermove={handleResizeMove}
+    onpointerup={handleResizeEnd}
+    ondblclick={(e) => resetToHug(e, "y")}
+  ></button>
+  <button
+    aria-label="Resize left"
+    class="absolute z-20 cursor-ew-resize appearance-none bg-transparent border-none p-0"
+    style="left: {overlay.x - EDGE_THICKNESS / 2}px; top: {overlay.y +
+      HANDLE_SIZE}px; width: {EDGE_THICKNESS}px; height: {overlay.height -
+      HANDLE_SIZE * 2}px"
+    onclick={(e) => e.stopPropagation()}
+    onpointerdown={(e) => startResize(e, "left")}
+    onpointermove={handleResizeMove}
+    onpointerup={handleResizeEnd}
+    ondblclick={(e) => resetToHug(e, "x")}
+  ></button>
+  <button
+    aria-label="Resize right"
+    class="absolute z-20 cursor-ew-resize appearance-none bg-transparent border-none p-0"
+    style="left: {overlay.x + overlay.width - EDGE_THICKNESS / 2}px; top: {overlay.y +
+      HANDLE_SIZE}px; width: {EDGE_THICKNESS}px; height: {overlay.height -
+      HANDLE_SIZE * 2}px"
+    onclick={(e) => e.stopPropagation()}
+    onpointerdown={(e) => startResize(e, "right")}
+    onpointermove={handleResizeMove}
+    onpointerup={handleResizeEnd}
+    ondblclick={(e) => resetToHug(e, "x")}
+  ></button>
 
-  {#if node.type === "frame" || node.type === "text"}
-    <!-- Edge hit areas -->
-    <!-- svelte-ignore a11y_no_static_element_interactions -->
-    <div
-      class="absolute z-20 cursor-ns-resize"
-      style="left: {s.x + HANDLE_SIZE}px; top: {s.y -
-        EDGE_THICKNESS / 2}px; width: {s.w -
-        HANDLE_SIZE * 2}px; height: {EDGE_THICKNESS}px"
+  <!-- Corner handles -->
+  {#each corners as corner (corner.handle)}
+    <button
+      aria-label="Resize {corner.handle}"
+      class="absolute z-30 bg-white border-2 border-blue-500 appearance-none p-0"
+      class:cursor-nwse-resize={corner.handle === "top-left" ||
+        corner.handle === "bottom-right"}
+      class:cursor-nesw-resize={corner.handle === "top-right" ||
+        corner.handle === "bottom-left"}
+      style="left: {corner.x - HANDLE_SIZE / 2}px; top: {corner.y -
+        HANDLE_SIZE / 2}px; width: {HANDLE_SIZE}px; height: {HANDLE_SIZE}px"
       onclick={(e) => e.stopPropagation()}
-      onpointerdown={(e) => startResize(e, "top")}
+      onpointerdown={(e) => startResize(e, corner.handle)}
       onpointermove={handleResizeMove}
       onpointerup={handleResizeEnd}
-      ondblclick={(e) => resetToHug(e, "y")}
-    ></div>
-    <!-- svelte-ignore a11y_no_static_element_interactions -->
-    <div
-      class="absolute z-20 cursor-ns-resize"
-      style="left: {s.x + HANDLE_SIZE}px; top: {s.y +
-        s.h -
-        EDGE_THICKNESS / 2}px; width: {s.w -
-        HANDLE_SIZE * 2}px; height: {EDGE_THICKNESS}px"
-      onclick={(e) => e.stopPropagation()}
-      onpointerdown={(e) => startResize(e, "bottom")}
-      onpointermove={handleResizeMove}
-      onpointerup={handleResizeEnd}
-      ondblclick={(e) => resetToHug(e, "y")}
-    ></div>
-    <!-- svelte-ignore a11y_no_static_element_interactions -->
-    <div
-      class="absolute z-20 cursor-ew-resize"
-      style="left: {s.x - EDGE_THICKNESS / 2}px; top: {s.y +
-        HANDLE_SIZE}px; width: {EDGE_THICKNESS}px; height: {s.h -
-        HANDLE_SIZE * 2}px"
-      onclick={(e) => e.stopPropagation()}
-      onpointerdown={(e) => startResize(e, "left")}
-      onpointermove={handleResizeMove}
-      onpointerup={handleResizeEnd}
-      ondblclick={(e) => resetToHug(e, "x")}
-    ></div>
-    <!-- svelte-ignore a11y_no_static_element_interactions -->
-    <div
-      class="absolute z-20 cursor-ew-resize"
-      style="left: {s.x + s.w - EDGE_THICKNESS / 2}px; top: {s.y +
-        HANDLE_SIZE}px; width: {EDGE_THICKNESS}px; height: {s.h -
-        HANDLE_SIZE * 2}px"
-      onclick={(e) => e.stopPropagation()}
-      onpointerdown={(e) => startResize(e, "right")}
-      onpointermove={handleResizeMove}
-      onpointerup={handleResizeEnd}
-      ondblclick={(e) => resetToHug(e, "x")}
-    ></div>
-
-    <!-- Corner handles -->
-    {@const corners: { handle: ResizeHandle; x: number; y: number }[] = [
-      { handle: "top-left", x: s.x, y: s.y },
-      { handle: "top-right", x: s.x + s.w, y: s.y },
-      { handle: "bottom-left", x: s.x, y: s.y + s.h },
-      { handle: "bottom-right", x: s.x + s.w, y: s.y + s.h },
-    ]}
-    {#each corners as corner (corner.handle)}
-      <!-- svelte-ignore a11y_no_static_element_interactions -->
-      <div
-        class="absolute z-30 bg-white border-2 border-blue-500"
-        class:cursor-nwse-resize={corner.handle === "top-left" ||
-          corner.handle === "bottom-right"}
-        class:cursor-nesw-resize={corner.handle === "top-right" ||
-          corner.handle === "bottom-left"}
-        style="left: {corner.x - HANDLE_SIZE / 2}px; top: {corner.y -
-          HANDLE_SIZE / 2}px; width: {HANDLE_SIZE}px; height: {HANDLE_SIZE}px"
-        onclick={(e) => e.stopPropagation()}
-        onpointerdown={(e) => startResize(e, corner.handle)}
-        onpointermove={handleResizeMove}
-        onpointerup={handleResizeEnd}
-      ></div>
-    {/each}
-  {/if}
+    ></button>
+  {/each}
 {/if}

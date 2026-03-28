@@ -1,5 +1,6 @@
 import { describe, expect, test } from "vitest";
 
+import type { FillLayer } from "./styles/fill";
 import {
   applyUniformTypographyStyle,
   createText,
@@ -7,8 +8,8 @@ import {
   hasRunStyleOverrides,
   normalizeTextNode,
   paragraphStyle,
-  resolveParagraphStyle,
-  resolveRunStyle,
+  commonParagraphStyle,
+  commonRunStyle,
   runStyle,
   type TextNode,
   textStyle,
@@ -58,19 +59,61 @@ describe("runStyle", () => {
     expect(runStyle({ fontSize: 24 })).toBe("font-size: 24px");
   });
 
-  test("all properties", () => {
+  test("all properties with solid fill", () => {
     const result = runStyle({
       fontSize: 14,
       fontFamily: "Arial",
       fontWeight: 700,
-      color: { r: 255, g: 0, b: 0, a: 1 },
+      fills: [
+        { id: "r", fill: { type: "solid", color: { r: 255, g: 0, b: 0, a: 1 } } },
+      ],
       letterSpacing: 2,
     });
     expect(result).toContain("font-size: 14px");
     expect(result).toContain("font-family: Arial");
     expect(result).toContain("font-weight: 700");
     expect(result).toContain("color: rgba(255,0,0,1)");
+    expect(result).not.toContain("background-clip");
     expect(result).toContain("letter-spacing: 2px");
+  });
+
+  test("gradient fill uses background-clip: text", () => {
+    const result = runStyle({
+      fills: [
+        {
+          id: "g",
+          fill: {
+            type: "linear-gradient",
+            gradient: {
+              start: { x: 0, y: 0.5 },
+              end: { x: 1, y: 0.5 },
+              stops: [
+                { id: "a", offset: 0, color: { r: 255, g: 0, b: 0, a: 1 } },
+                { id: "b", offset: 1, color: { r: 0, g: 0, b: 255, a: 1 } },
+              ],
+            },
+          },
+        },
+      ],
+    });
+    expect(result).toContain("background-clip: text");
+    expect(result).toContain("color: transparent");
+  });
+
+  test("resolves from base when run has no override", () => {
+    const result = runStyle({}, { fontSize: 20, fontWeight: 600 });
+    expect(result).toContain("font-size: 20px");
+    expect(result).toContain("font-weight: 600");
+  });
+
+  test("empty fills emits transparent without background", () => {
+    const result = runStyle({ fills: [] });
+    expect(result).toBe("color: transparent");
+    expect(result).not.toContain("background");
+  });
+
+  test("undefined fills emits nothing", () => {
+    expect(runStyle({})).toBe("");
   });
 
   test("letterSpacing 0 is included", () => {
@@ -93,15 +136,16 @@ describe("paragraphStyle", () => {
 });
 
 describe("textStyle", () => {
-  test("combines run and paragraph styles", () => {
+  test("outputs container styles only, no run or paragraph styles", () => {
     const node = createText({
       id: "t1",
       content: [{ content: [{ text: "x" }] }],
     });
     const result = textStyle(node);
-    expect(result).toContain("font-size: 16px");
-    expect(result).toContain("text-align: start");
-    expect(result).toContain("line-height: 1.5");
+    expect(result).toContain("fit-content");
+    expect(result).not.toContain("font-size");
+    expect(result).not.toContain("text-align");
+    expect(result).not.toContain("line-height");
   });
 });
 
@@ -191,14 +235,14 @@ describe("normalizeTextNode", () => {
   });
 });
 
-describe("resolveRunStyle", () => {
+describe("commonRunStyle", () => {
   const defaults = createText({
     id: "t1",
     content: [{ content: [{ text: "x" }] }],
   });
 
   test("empty runs returns defaults", () => {
-    const result = resolveRunStyle([], defaults);
+    const result = commonRunStyle([], defaults);
     expect(result.fontSize).toBe(16);
     expect(result.fontFamily).toBe("Inter, sans-serif");
     expect(result.fontWeight).toBe(400);
@@ -206,13 +250,13 @@ describe("resolveRunStyle", () => {
   });
 
   test("single style returns its effective values", () => {
-    const result = resolveRunStyle([{ fontSize: 24 }], defaults);
+    const result = commonRunStyle([{ fontSize: 24 }], defaults);
     expect(result.fontSize).toBe(24);
     expect(result.fontFamily).toBe("Inter, sans-serif");
   });
 
   test("same style across entries", () => {
-    const result = resolveRunStyle(
+    const result = commonRunStyle(
       [{ fontSize: 24 }, { fontSize: 24 }],
       defaults,
     );
@@ -220,54 +264,61 @@ describe("resolveRunStyle", () => {
   });
 
   test("mixed fontSize", () => {
-    const result = resolveRunStyle(
+    const result = commonRunStyle(
       [{ fontSize: 24 }, { fontSize: 16 }],
       defaults,
     );
     expect(result.fontSize).toBe("mixed");
   });
 
-  test("mixed color", () => {
-    const result = resolveRunStyle(
+  test("mixed fills", () => {
+    const result = commonRunStyle(
       [
-        { color: { r: 255, g: 0, b: 0, a: 1 } },
-        { color: { r: 0, g: 255, b: 0, a: 1 } },
+        {
+          fills: [
+            { id: "a", fill: { type: "solid", color: { r: 255, g: 0, b: 0, a: 1 } } },
+          ],
+        },
+        {
+          fills: [
+            { id: "b", fill: { type: "solid", color: { r: 0, g: 255, b: 0, a: 1 } } },
+          ],
+        },
       ],
       defaults,
     );
-    expect(result.color).toBe("mixed");
+    expect(result.fills).toBe("mixed");
   });
 
-  test("same color across entries", () => {
-    const color = { r: 255, g: 0, b: 0, a: 1 };
-    const result = resolveRunStyle(
-      [{ color }, { color: { ...color } }],
-      defaults,
-    );
-    expect(result.color).toEqual(color);
+  test("same fills across entries", () => {
+    const fills: FillLayer[] = [
+      { id: "a", fill: { type: "solid", color: { r: 255, g: 0, b: 0, a: 1 } } },
+    ];
+    const result = commonRunStyle([{ fills }, { fills }], defaults);
+    expect(result.fills).toEqual(fills);
   });
 });
 
-describe("resolveParagraphStyle", () => {
+describe("commonParagraphStyle", () => {
   const defaults = createText({
     id: "t1",
     content: [{ content: [{ text: "x" }] }],
   });
 
   test("empty paragraphs returns defaults", () => {
-    const result = resolveParagraphStyle([], defaults);
+    const result = commonParagraphStyle([], defaults);
     expect(result.textAlign).toBe("start");
     expect(result.lineHeight).toBe(1.5);
   });
 
   test("single style returns its effective values", () => {
-    const result = resolveParagraphStyle([{ textAlign: "center" }], defaults);
+    const result = commonParagraphStyle([{ textAlign: "center" }], defaults);
     expect(result.textAlign).toBe("center");
     expect(result.lineHeight).toBe(1.5);
   });
 
   test("same style across entries", () => {
-    const result = resolveParagraphStyle(
+    const result = commonParagraphStyle(
       [{ textAlign: "center" }, { textAlign: "center" }],
       defaults,
     );
@@ -275,7 +326,7 @@ describe("resolveParagraphStyle", () => {
   });
 
   test("mixed textAlign", () => {
-    const result = resolveParagraphStyle(
+    const result = commonParagraphStyle(
       [{ textAlign: "center" }, { textAlign: "end" }],
       defaults,
     );
@@ -283,7 +334,7 @@ describe("resolveParagraphStyle", () => {
   });
 
   test("mixed lineHeight", () => {
-    const result = resolveParagraphStyle(
+    const result = commonParagraphStyle(
       [{ lineHeight: 1.2 }, { lineHeight: 2.0 }],
       defaults,
     );
@@ -291,7 +342,7 @@ describe("resolveParagraphStyle", () => {
   });
 
   test("falls back to defaults when no overrides", () => {
-    const result = resolveParagraphStyle([{}, {}], defaults);
+    const result = commonParagraphStyle([{}, {}], defaults);
     expect(result.textAlign).toBe("start");
     expect(result.lineHeight).toBe(1.5);
   });
@@ -354,20 +405,26 @@ describe("applyUniformTypographyStyle", () => {
     expect(result.content[0].textAlign).toBeUndefined();
   });
 
-  test("strips color overrides from all runs across paragraphs", () => {
-    const red = { r: 255, g: 0, b: 0, a: 1 };
-    const blue = { r: 0, g: 0, b: 255, a: 1 };
+  test("strips fills overrides from all runs across paragraphs", () => {
+    const red: FillLayer[] = [
+      { id: "r", fill: { type: "solid", color: { r: 255, g: 0, b: 0, a: 1 } } },
+    ];
+    const blue: FillLayer[] = [
+      { id: "b", fill: { type: "solid", color: { r: 0, g: 0, b: 255, a: 1 } } },
+    ];
     const node = makeNode({
       content: [
-        { content: [{ text: "hello", color: red }] },
-        { content: [{ text: "world", color: blue }] },
+        { content: [{ text: "hello", fills: red }] },
+        { content: [{ text: "world", fills: blue }] },
       ],
     });
-    const green = { r: 0, g: 255, b: 0, a: 1 };
-    const result = applyUniformTypographyStyle(node, { color: green });
-    expect(result.color).toEqual(green);
-    expect(result.content[0].content[0].color).toBeUndefined();
-    expect(result.content[1].content[0].color).toBeUndefined();
+    const green: FillLayer[] = [
+      { id: "g", fill: { type: "solid", color: { r: 0, g: 255, b: 0, a: 1 } } },
+    ];
+    const result = applyUniformTypographyStyle(node, { fills: green });
+    expect(result.fills).toEqual(green);
+    expect(result.content[0].content[0].fills).toBeUndefined();
+    expect(result.content[1].content[0].fills).toBeUndefined();
   });
 
   test("does not mutate the original node", () => {
@@ -397,10 +454,14 @@ describe("hasRunStyleOverrides", () => {
     expect(hasRunStyleOverrides({ fontWeight: 700 })).toBe(true);
   });
 
-  test("color override", () => {
-    expect(hasRunStyleOverrides({ color: { r: 0, g: 0, b: 0, a: 1 } })).toBe(
-      true,
-    );
+  test("fills override", () => {
+    expect(
+      hasRunStyleOverrides({
+        fills: [
+          { id: "a", fill: { type: "solid", color: { r: 0, g: 0, b: 0, a: 1 } } },
+        ],
+      }),
+    ).toBe(true);
   });
 
   test("letterSpacing override", () => {

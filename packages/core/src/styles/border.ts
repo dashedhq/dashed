@@ -37,13 +37,18 @@ export function bordersStyle(borders: Borders) {
   const css = colorToCss(color);
   const parts: string[] = [];
 
-  if (widths.top > 0) parts.push(`border-top: ${widths.top}px ${style} ${css}`);
-  if (widths.right > 0)
+  if (widths.top > 0) {
+    parts.push(`border-top: ${widths.top}px ${style} ${css}`);
+  }
+  if (widths.right > 0) {
     parts.push(`border-right: ${widths.right}px ${style} ${css}`);
-  if (widths.bottom > 0)
+  }
+  if (widths.bottom > 0) {
     parts.push(`border-bottom: ${widths.bottom}px ${style} ${css}`);
-  if (widths.left > 0)
+  }
+  if (widths.left > 0) {
     parts.push(`border-left: ${widths.left}px ${style} ${css}`);
+  }
 
   return parts.join("; ");
 }

@@ -1,13 +1,23 @@
 <script lang="ts">
   import type { Snippet } from "svelte";
 
+  import { cn } from "$lib/utils";
+
   type Props = {
     startDecorator?: Snippet;
     value: number | null;
+    onValueChange: (v: number) => void;
     placeholder?: string;
+    class?: string;
   };
 
-  let { value = $bindable(), startDecorator, placeholder }: Props = $props();
+  let {
+    value,
+    onValueChange,
+    startDecorator,
+    placeholder,
+    class: className,
+  }: Props = $props();
 
   let draftValue = $derived.by(() => {
     return value?.toString() || "";
@@ -15,7 +25,10 @@
 </script>
 
 <div
-  class="text-neutral-50 text-sm border border-neutral-700 rounded-md px-2 h-8 flex items-center gap-2 focus-within:border-blue-500"
+  class={cn(
+    "text-neutral-50 text-sm border border-neutral-700 rounded-md px-2 h-8 flex items-center gap-2 focus-within:border-blue-500",
+    className,
+  )}
 >
   <div class="text-neutral-400 [&_svg]:size-4">
     {@render startDecorator?.()}
@@ -25,18 +38,14 @@
     {placeholder}
     bind:value={draftValue}
     onblur={() => {
-      if (draftValue.trim() === "") {
-        value = null;
-        draftValue = "";
-        return;
+      const parsed = draftValue.trim() === "" ? null : parseFloat(draftValue);
+      if (parsed !== null && !Number.isNaN(parsed) && parsed >= 0) {
+        onValueChange(parsed);
       }
-
-      const parsed = parseFloat(draftValue);
-      if (!Number.isNaN(parsed) && parsed >= 0 && parsed != value) {
-        value = parsed;
-      } else {
-        draftValue = value?.toString() || "";
-      }
+      // Sync display back to model — needed when the parent normalizes
+      // the value back to the same number (e.g. rounding), since the
+      // derived won't re-run if value didn't change.
+      draftValue = value?.toString() || "";
     }}
   />
 </div>

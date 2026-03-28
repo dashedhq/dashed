@@ -1,9 +1,9 @@
-import { type Fill, fillStyle } from "./styles/fill";
+import { type FillLayer, fillLayersStyle } from "./styles/fill";
 
 export type ScreenStyle = {
   x: number;
   y: number;
-  fill: Fill;
+  fills: FillLayer[];
   width: number;
   height: number;
 };
@@ -20,7 +20,7 @@ const screenDefaults: Omit<ScreenNode, "id" | "type"> = {
   children: [],
   x: 0,
   y: 0,
-  fill: { type: "solid", color: { r: 255, g: 255, b: 255, a: 1 } },
+  fills: [],
   width: 390,
   height: 844,
 };
@@ -33,7 +33,7 @@ export function createScreen(
 
 export function screenStyle(style: ScreenStyle) {
   return [
-    fillStyle(style.fill),
+    fillLayersStyle(style.fills),
     `width: ${style.width}px`,
     `height: ${style.height}px`,
   ].join("; ");

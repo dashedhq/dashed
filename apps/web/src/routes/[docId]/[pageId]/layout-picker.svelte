@@ -5,37 +5,48 @@
 
   type Props = {
     value: Layout;
+    onValueChange: (v: Layout) => void;
   };
 
-  const { value = $bindable() }: Props = $props();
+  const { value, onValueChange }: Props = $props();
+
+  const toggleValue = $derived.by(() => {
+    if (value.type === "stack" && value.direction === "horizontal") {
+      return "hstack";
+    }
+
+    if (value.type === "stack" && value.direction === "vertical") {
+      return "vstack";
+    }
+
+    return "grid";
+  });
 </script>
 
 <ToggleGroup.Root
   type="single"
-  bind:value={
-    () => {
-      if (value.type === "stack" && value.direction === "horizontal") {
-        return "hstack";
-      }
-
-      if (value.type === "stack" && value.direction === "vertical") {
-        return "vstack";
-      }
-
-      return "grid";
-    },
-    (v) => {
-      if (v === "hstack") {
-        value.type = "stack";
-        value.direction = "horizontal";
-      }
-
-      if (v === "vstack") {
-        value.type = "stack";
-        value.direction = "vertical";
-      }
+  value={toggleValue}
+  onValueChange={(v) => {
+    if (v === "hstack") {
+      onValueChange({
+        type: "stack",
+        direction: "horizontal",
+        gap: value.type === "stack" ? value.gap : 0,
+        align: value.type === "stack" ? value.align : "start",
+        distribute: value.type === "stack" ? value.distribute : "start",
+      });
     }
-  }
+
+    if (v === "vstack") {
+      onValueChange({
+        type: "stack",
+        direction: "vertical",
+        gap: value.type === "stack" ? value.gap : 0,
+        align: value.type === "stack" ? value.align : "start",
+        distribute: value.type === "stack" ? value.distribute : "start",
+      });
+    }
+  }}
   class="grid grid-cols-3 bg-neutral-800 h-8 rounded-md text-sm"
 >
   <ToggleGroup.Item

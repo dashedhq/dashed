@@ -7,64 +7,128 @@
     PanelLeftDashedIcon,
     PanelRightDashedIcon,
     PanelTopDashedIcon,
+    PlusIcon,
     SquareDashedTopSolidIcon,
     SquareRoundCornerIcon,
   } from "@lucide/svelte";
 
+  import { Button } from "$lib/components/ui/button";
+
   import BorderStylePicker from "./border-style-picker.svelte";
   import ColorInput from "./color-input.svelte";
-  import FillPicker from "./fill-picker.svelte";
+  import { generateFillId, getEditorState } from "./editor-state.svelte";
+  import FillLayerList from "./fill-layer-list.svelte";
   import LayoutAlignmentPicker from "./layout-alignment-picker.svelte";
   import LayoutPicker from "./layout-picker.svelte";
   import NumberInput from "./number-input.svelte";
   import SizeInput from "./size-input.svelte";
 
   type Props = {
-    node: FrameNode;
+    frame: FrameNode;
   };
 
-  let { node = $bindable() }: Props = $props();
+  let { frame }: Props = $props();
+  const editor = getEditorState();
 </script>
 
 <div class="flex flex-col gap-2">
-  <div class="text-neutral-50 text-sm">Background</div>
-  <FillPicker bind:value={node.fill} />
+  <div class="flex items-center justify-between">
+    <div class="text-neutral-50 text-sm">Background</div>
+    <Button
+      size="icon-md"
+      onclick={() =>
+        editor.updateFrame(frame.id, (n) => {
+          n.fills = [
+            ...n.fills,
+            {
+              id: generateFillId(),
+              fill: { type: "solid", color: { r: 0, g: 0, b: 0, a: 1 } },
+            },
+          ];
+        })}><PlusIcon /></Button
+    >
+  </div>
+  <FillLayerList
+    value={frame.fills}
+    onValueChange={(layers) =>
+      editor.updateFrame(frame.id, (n) => (n.fills = layers))}
+    onChangeStart={() => editor.beginPatch()}
+    onChangeEnd={() => editor.commitPatch()}
+  />
 </div>
 <div class="flex flex-col gap-2">
   <div class="text-neutral-50 text-sm">Size</div>
   <div class="grid grid-cols-2 gap-2">
-    <SizeInput notation="W" bind:value={node.dimensions.width} />
-    <SizeInput notation="H" bind:value={node.dimensions.height} />
+    <SizeInput
+      notation="W"
+      value={frame.dimensions.width}
+      resolvedValue={editor.nodeMeasurements?.offsetWidth}
+      onValueChange={(v) =>
+        editor.updateFrame(frame.id, (n) => (n.dimensions.width = v))}
+    />
+    <SizeInput
+      notation="H"
+      value={frame.dimensions.height}
+      resolvedValue={editor.nodeMeasurements?.offsetHeight}
+      onValueChange={(v) =>
+        editor.updateFrame(frame.id, (n) => (n.dimensions.height = v))}
+    />
   </div>
 </div>
 <div class="flex flex-col gap-2">
   <div class="text-neutral-50 text-sm">Layout</div>
-  <LayoutPicker bind:value={node.layout} />
+  <LayoutPicker
+    value={frame.layout}
+    onValueChange={(v) => editor.updateFrame(frame.id, (n) => (n.layout = v))}
+  />
   <div class="grid grid-cols-2 gap-2">
-    <LayoutAlignmentPicker bind:value={node.layout} />
-    <NumberInput bind:value={node.layout.gap}>
+    <LayoutAlignmentPicker
+      value={frame.layout}
+      onValueChange={(v) => editor.updateFrame(frame.id, (n) => (n.layout = v))}
+    />
+    <NumberInput
+      value={frame.layout.gap}
+      onValueChange={(v) =>
+        editor.updateFrame(frame.id, (n) => (n.layout.gap = v))}
+    >
       {#snippet startDecorator()}
         <BetweenHorizontalStartIcon />
       {/snippet}
     </NumberInput>
   </div>
   <div class="grid grid-cols-2 gap-2">
-    <NumberInput bind:value={node.padding.left}>
+    <NumberInput
+      value={frame.padding.left}
+      onValueChange={(v) =>
+        editor.updateFrame(frame.id, (n) => (n.padding.left = v))}
+    >
       {#snippet startDecorator()}
         <PanelLeftDashedIcon />
       {/snippet}
     </NumberInput>
-    <NumberInput bind:value={node.padding.top}>
+    <NumberInput
+      value={frame.padding.top}
+      onValueChange={(v) =>
+        editor.updateFrame(frame.id, (n) => (n.padding.top = v))}
+    >
       {#snippet startDecorator()}
         <PanelTopDashedIcon />
       {/snippet}
     </NumberInput>
-    <NumberInput bind:value={node.padding.right}>
+    <NumberInput
+      value={frame.padding.right}
+      onValueChange={(v) =>
+        editor.updateFrame(frame.id, (n) => (n.padding.right = v))}
+    >
       {#snippet startDecorator()}
         <PanelRightDashedIcon />
       {/snippet}
     </NumberInput>
-    <NumberInput bind:value={node.padding.bottom}>
+    <NumberInput
+      value={frame.padding.bottom}
+      onValueChange={(v) =>
+        editor.updateFrame(frame.id, (n) => (n.padding.bottom = v))}
+    >
       {#snippet startDecorator()}
         <PanelBottomDashedIcon />
       {/snippet}
@@ -74,29 +138,47 @@
 <div class="flex flex-col gap-2">
   <div class="text-neutral-50 text-sm">Appearance</div>
   <NumberInput
-    bind:value={() => node.opacity * 100, (v) => (node.opacity = v / 100)}
+    value={Math.round(frame.opacity * 100)}
+    onValueChange={(v) =>
+      editor.updateFrame(frame.id, (n) => (n.opacity = Math.round(v) / 100))}
   >
     {#snippet startDecorator()}
       <EyeIcon />
     {/snippet}
   </NumberInput>
   <div class="grid grid-cols-2 gap-2">
-    <NumberInput bind:value={node.borderRadius.topLeft}>
+    <NumberInput
+      value={frame.borderRadius.topLeft}
+      onValueChange={(v) =>
+        editor.updateFrame(frame.id, (n) => (n.borderRadius.topLeft = v))}
+    >
       {#snippet startDecorator()}
         <SquareRoundCornerIcon class="-rotate-90" />
       {/snippet}
     </NumberInput>
-    <NumberInput bind:value={node.borderRadius.topRight}>
+    <NumberInput
+      value={frame.borderRadius.topRight}
+      onValueChange={(v) =>
+        editor.updateFrame(frame.id, (n) => (n.borderRadius.topRight = v))}
+    >
       {#snippet startDecorator()}
         <SquareRoundCornerIcon />
       {/snippet}
     </NumberInput>
-    <NumberInput bind:value={node.borderRadius.bottomLeft}>
+    <NumberInput
+      value={frame.borderRadius.bottomLeft}
+      onValueChange={(v) =>
+        editor.updateFrame(frame.id, (n) => (n.borderRadius.bottomLeft = v))}
+    >
       {#snippet startDecorator()}
         <SquareRoundCornerIcon class="rotate-180" />
       {/snippet}
     </NumberInput>
-    <NumberInput bind:value={node.borderRadius.bottomRight}>
+    <NumberInput
+      value={frame.borderRadius.bottomRight}
+      onValueChange={(v) =>
+        editor.updateFrame(frame.id, (n) => (n.borderRadius.bottomRight = v))}
+    >
       {#snippet startDecorator()}
         <SquareRoundCornerIcon class="rotate-90" />
       {/snippet}
@@ -106,24 +188,50 @@
 <div class="flex flex-col gap-2">
   <div class="text-neutral-50 text-sm">Borders</div>
   <div class="grid grid-cols-2 gap-2">
-    <ColorInput bind:value={node.borders.color} />
-    <BorderStylePicker bind:value={node.borders.style} />
-    <NumberInput bind:value={node.borders.widths.left}>
+    <ColorInput
+      value={frame.borders.color}
+      onValueChange={(v) =>
+        editor.updateFrame(frame.id, (n) => (n.borders.color = v))}
+      onChangeStart={() => editor.beginPatch()}
+      onChangeEnd={() => editor.commitPatch()}
+    />
+    <BorderStylePicker
+      value={frame.borders.style}
+      onValueChange={(v) =>
+        editor.updateFrame(frame.id, (n) => (n.borders.style = v))}
+    />
+    <NumberInput
+      value={frame.borders.widths.left}
+      onValueChange={(v) =>
+        editor.updateFrame(frame.id, (n) => (n.borders.widths.left = v))}
+    >
       {#snippet startDecorator()}
         <SquareDashedTopSolidIcon class="-rotate-90" />
       {/snippet}
     </NumberInput>
-    <NumberInput bind:value={node.borders.widths.top}>
+    <NumberInput
+      value={frame.borders.widths.top}
+      onValueChange={(v) =>
+        editor.updateFrame(frame.id, (n) => (n.borders.widths.top = v))}
+    >
       {#snippet startDecorator()}
         <SquareDashedTopSolidIcon />
       {/snippet}
     </NumberInput>
-    <NumberInput bind:value={node.borders.widths.right}>
+    <NumberInput
+      value={frame.borders.widths.right}
+      onValueChange={(v) =>
+        editor.updateFrame(frame.id, (n) => (n.borders.widths.right = v))}
+    >
       {#snippet startDecorator()}
         <SquareDashedTopSolidIcon class="rotate-90" />
       {/snippet}
     </NumberInput>
-    <NumberInput bind:value={node.borders.widths.bottom}>
+    <NumberInput
+      value={frame.borders.widths.bottom}
+      onValueChange={(v) =>
+        editor.updateFrame(frame.id, (n) => (n.borders.widths.bottom = v))}
+    >
       {#snippet startDecorator()}
         <SquareDashedTopSolidIcon class="rotate-180" />
       {/snippet}

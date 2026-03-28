@@ -1,134 +1,105 @@
 <script lang="ts">
-  import {
-    applyUniformTypographyStyle,
-    type Color,
-    type ResolvedTypographyStyle,
-    type TextNode,
-    type TypographyStyle,
-  } from "@dashedhq/core";
+  import type { TextAlign, TextNode, TypographyStyle } from "@dashedhq/core";
   import {
     CaseSensitiveIcon,
     MoveVerticalIcon,
+    PlusIcon,
     TextAlignCenterIcon,
     TextAlignEndIcon,
     TextAlignStartIcon,
     TypeIcon,
   } from "@lucide/svelte";
   import { ToggleGroup } from "bits-ui";
-  import type { EditorState } from "prosemirror-state";
-  import type { EditorView } from "prosemirror-view";
 
-  import ColorInput from "./color-input.svelte";
+  import { Button } from "$lib/components/ui/button";
+
+  import { generateFillId, getEditorState } from "./editor-state.svelte";
+  import FillLayerList from "./fill-layer-list.svelte";
   import NumberInput from "./number-input.svelte";
-  import { getActiveTypographyStyle, setTypographyStyle } from "./prosemirror";
   import SizeInput from "./size-input.svelte";
 
   type Props = {
-    node: TextNode;
-    textEditorView: EditorView | null;
-    textEditorState: EditorState | null;
+    text: TextNode;
   };
 
-  let { node = $bindable(), textEditorView, textEditorState }: Props = $props();
+  let { text }: Props = $props();
+  const editor = getEditorState();
 
-  let activeStyle: ResolvedTypographyStyle = $derived.by(() => {
-    if (textEditorState) {
-      return getActiveTypographyStyle(textEditorState, node);
-    }
-
-    return {
-      textAlign: node.textAlign,
-      fontSize: node.fontSize,
-      fontFamily: node.fontFamily,
-      fontWeight: node.fontWeight,
-      color: node.color,
-      lineHeight: node.lineHeight,
-      letterSpacing: node.letterSpacing,
-    };
-  });
+  const commonStyle = $derived(editor.commonTypographyStyle(text.id));
 
   function changeTypographyStyle(style: Partial<TypographyStyle>) {
-    if (textEditorView) {
-      setTypographyStyle(textEditorView, style);
-      return;
-    }
-
-    node = applyUniformTypographyStyle(node, style);
+    editor.applyTypographyStyle(text.id, style);
   }
 </script>
 
-{#if activeStyle}
+{#if commonStyle}
   <div class="flex flex-col gap-2">
     <div class="text-neutral-50 text-sm">Size</div>
     <div class="grid grid-cols-2 gap-2">
-      <SizeInput notation="W" bind:value={node.dimensions.width} />
-      <SizeInput notation="H" bind:value={node.dimensions.height} />
+      <SizeInput
+        notation="W"
+        value={text.dimensions.width}
+        resolvedValue={editor.nodeMeasurements?.offsetWidth}
+        onValueChange={(v) =>
+          editor.updateText(text.id, (n) => (n.dimensions.width = v))}
+      />
+      <SizeInput
+        notation="H"
+        value={text.dimensions.height}
+        resolvedValue={editor.nodeMeasurements?.offsetHeight}
+        onValueChange={(v) =>
+          editor.updateText(text.id, (n) => (n.dimensions.height = v))}
+      />
     </div>
   </div>
   <div class="flex flex-col gap-2">
     <div class="text-neutral-50 text-sm">Typography</div>
     <div class="grid grid-cols-2 gap-2">
       <NumberInput
-        placeholder={activeStyle.fontSize === "mixed" ? "Mixed" : undefined}
-        bind:value={
-          () =>
-            activeStyle.fontSize === "mixed" ? null : activeStyle.fontSize,
-          (v) => v != null && changeTypographyStyle({ fontSize: v })
-        }
+        placeholder={commonStyle.fontSize === "mixed" ? "Mixed" : undefined}
+        value={commonStyle.fontSize === "mixed" ? null : commonStyle.fontSize}
+        onValueChange={(v) => changeTypographyStyle({ fontSize: v })}
       >
         {#snippet startDecorator()}<TypeIcon />{/snippet}
       </NumberInput>
       <NumberInput
-        placeholder={activeStyle.fontWeight === "mixed" ? "Mixed" : undefined}
-        bind:value={
-          () =>
-            activeStyle.fontWeight === "mixed" ? null : activeStyle.fontWeight,
-          (v) => v != null && changeTypographyStyle({ fontWeight: v })
-        }
+        placeholder={commonStyle.fontWeight === "mixed" ? "Mixed" : undefined}
+        value={commonStyle.fontWeight === "mixed"
+          ? null
+          : commonStyle.fontWeight}
+        onValueChange={(v) => changeTypographyStyle({ fontWeight: v })}
       >
         {#snippet startDecorator()}<span class="text-xs font-bold">W</span
           >{/snippet}
       </NumberInput>
       <NumberInput
-        placeholder={activeStyle.lineHeight === "mixed" ? "Mixed" : undefined}
-        bind:value={
-          () =>
-            activeStyle.lineHeight === "mixed" ? null : activeStyle.lineHeight,
-          (v) => v != null && changeTypographyStyle({ lineHeight: v })
-        }
+        placeholder={commonStyle.lineHeight === "mixed" ? "Mixed" : undefined}
+        value={commonStyle.lineHeight === "mixed"
+          ? null
+          : commonStyle.lineHeight}
+        onValueChange={(v) => changeTypographyStyle({ lineHeight: v })}
       >
         {#snippet startDecorator()}<MoveVerticalIcon />{/snippet}
       </NumberInput>
       <NumberInput
-        placeholder={activeStyle.letterSpacing === "mixed"
+        placeholder={commonStyle.letterSpacing === "mixed"
           ? "Mixed"
           : undefined}
-        bind:value={
-          () =>
-            activeStyle.letterSpacing === "mixed"
-              ? null
-              : activeStyle.letterSpacing,
-          (v) => v != null && changeTypographyStyle({ letterSpacing: v })
-        }
+        value={commonStyle.letterSpacing === "mixed"
+          ? null
+          : commonStyle.letterSpacing}
+        onValueChange={(v) => changeTypographyStyle({ letterSpacing: v })}
       >
         {#snippet startDecorator()}<CaseSensitiveIcon />{/snippet}
       </NumberInput>
     </div>
-    {#if activeStyle.color !== "mixed"}
-      <ColorInput
-        bind:value={
-          () => activeStyle.color as Color,
-          (c) => changeTypographyStyle({ color: c })
-        }
-      />
-    {/if}
     <ToggleGroup.Root
       type="single"
-      bind:value={
-        () =>
-          activeStyle.textAlign === "mixed" ? undefined : activeStyle.textAlign,
-        (v) => changeTypographyStyle({ textAlign: v })
-      }
+      value={commonStyle.textAlign === "mixed"
+        ? undefined
+        : commonStyle.textAlign}
+      onValueChange={(v) =>
+        changeTypographyStyle({ textAlign: v as TextAlign })}
       class="grid grid-cols-3 bg-neutral-800 h-8 rounded-md"
     >
       <ToggleGroup.Item
@@ -147,5 +118,36 @@
         ><TextAlignEndIcon /></ToggleGroup.Item
       >
     </ToggleGroup.Root>
+  </div>
+  <div class="flex flex-col gap-2">
+    <div class="flex items-center justify-between">
+      <div class="text-neutral-50 text-sm">Fills</div>
+      <Button
+        size="icon-md"
+        onclick={() => {
+          const newFill = {
+            id: generateFillId(),
+            fill: { type: "solid" as const, color: { r: 0, g: 0, b: 0, a: 1 } },
+          };
+          if (commonStyle.fills === "mixed") {
+            changeTypographyStyle({ fills: [newFill] });
+          } else {
+            changeTypographyStyle({ fills: [...commonStyle.fills, newFill] });
+          }
+        }}><PlusIcon /></Button
+      >
+    </div>
+    {#if commonStyle.fills === "mixed"}
+      <p class="text-xs text-neutral-400">
+        Mixed fills across selection. Add a fill to apply uniformly.
+      </p>
+    {:else}
+      <FillLayerList
+        value={commonStyle.fills}
+        onValueChange={(layers) => changeTypographyStyle({ fills: layers })}
+        onChangeStart={() => editor.beginPatch()}
+        onChangeEnd={() => editor.commitPatch()}
+      />
+    {/if}
   </div>
 {/if}

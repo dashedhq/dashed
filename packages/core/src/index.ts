@@ -5,16 +5,13 @@ import { type TextNode, textStyle } from "./text";
 export type Node = FrameNode | TextNode | ScreenNode;
 
 export function nodeStyle(node: Node) {
-  if (node.type === "frame") return frameStyle(node);
-  if (node.type === "screen") return screenStyle(node);
+  if (node.type === "frame") {
+    return frameStyle(node);
+  }
+  if (node.type === "screen") {
+    return screenStyle(node);
+  }
   return textStyle(node);
-}
-
-export function resolveChildren(
-  nodes: Record<string, Node>,
-  children: string[],
-) {
-  return children.map((id) => nodes[id]);
 }
 
 export type Document = {
@@ -33,7 +30,12 @@ export type Page = PageMetadata & {
   children: string[];
 };
 
-export { type FrameNode, frameStyle, createFrame } from "./frame";
+export {
+  type FrameNode,
+  type FrameStyle,
+  frameStyle,
+  createFrame,
+} from "./frame";
 export {
   type TextNode,
   type TextRun,
@@ -43,21 +45,50 @@ export {
   type TypographyStyle,
   type TextStyle,
   type TextAlign,
-  type ResolvedRunStyle,
-  type ResolvedParagraphStyle,
-  type ResolvedTypographyStyle,
+  type TextDecoration,
+  type TextTransform,
+  type FontStyle,
+  type CommonRunStyle,
+  type CommonParagraphStyle,
+  type CommonTypographyStyle,
   runStyle,
   paragraphStyle,
   textStyle,
   createText,
+  effectiveRun,
+  effectiveParagraph,
   applyUniformTypographyStyle,
   normalizeTextNode,
-  resolveRunStyle,
-  resolveParagraphStyle,
+  commonRunStyle,
+  commonParagraphStyle,
   hasRunStyleOverrides,
   hasParagraphStyleOverrides,
 } from "./text";
-export { type Fill, type GradientStop, fillStyle } from "./styles/fill";
+export {
+  type Fill,
+  type FillLayer,
+  type GradientStop,
+  type ImageFill,
+  type SolidFill,
+  type LinearGradient,
+  type LinearGradientFill,
+  type Image,
+  normalizeLinearGradient,
+  linearGradientEquals,
+  addGradientStop,
+  removeGradientStop,
+  updateGradientStop,
+  imageEquals,
+  fillStyle,
+  fillsStyle,
+  fillsEquals,
+  fillLayersStyle,
+  fillLayersEquals,
+  linearGradientToCss,
+  imageToCss,
+  fillEquals,
+  gradientStopPosition,
+} from "./styles/fill";
 export {
   type BorderStyle,
   type BorderWidths,
@@ -79,19 +110,47 @@ export {
   tryHexToColor,
   hsvaToColor,
 } from "./styles/color";
-export { type Shadow, shadowStyle, opacityStyle } from "./styles/effect";
+export {
+  type Shadow,
+  type ShadowLayer,
+  type TextShadow,
+  type TextShadowLayer,
+  type BlendMode,
+  shadowStyle,
+  shadowsStyle,
+  shadowLayersStyle,
+  opacityStyle,
+  blendModeStyle,
+  blurStyle,
+  backdropBlurStyle,
+  rotationStyle,
+  textShadowStyle,
+  textShadowsStyle,
+  textShadowLayersStyle,
+} from "./styles/effect";
 export {
   type StackLayout,
   type StackAlignment,
   type StackDistribution,
   type StackDirection,
   type Layout,
+  type FixedSize,
+  type HugSize,
+  type FillSize,
   type Size,
   type Dimensions,
   type Padding,
+  type AutoPosition,
+  type AbsolutePosition,
+  type Position,
+  type Insets,
+  type InsetValue,
   layoutStyle,
   dimensionsStyle,
   paddingStyle,
+  type Overflow,
+  overflowStyle,
+  positionStyle,
 } from "./styles/layout";
 export {
   type ScreenNode,

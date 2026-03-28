@@ -23,8 +23,8 @@
   class={cn(
     "cursor-pointer inline-flex items-center justify-center text-neutral-50 rounded-md transition-colors ease-out duration-150",
     size === "md" && "h-8 px-2 min-w-20 text-sm [&_svg]:size-3",
-    size === "icon-md" && "size-7 [&_svg]:size-3",
-    size === "icon-lg" && "size-8 [&_svg]:size-4",
+    size === "icon-md" && "size-8 [&_svg]:size-3",
+    size === "icon-lg" && "size-9 [&_svg]:size-4",
     variant === "tertiary" && "hover:bg-neutral-700/50",
     className,
   )}

@@ -5,14 +5,16 @@
 
   type Props = {
     value: BorderStyle;
+    onValueChange: (v: BorderStyle) => void;
   };
 
-  let { value = $bindable() }: Props = $props();
+  let { value, onValueChange }: Props = $props();
 </script>
 
 <ToggleGroup.Root
   type="single"
-  bind:value
+  {value}
+  onValueChange={(v) => onValueChange(v as BorderStyle)}
   class="grid grid-cols-3 bg-neutral-800 h-8 rounded-md"
 >
   <ToggleGroup.Item

@@ -14,10 +14,7 @@ describe("createScreen", () => {
     expect(screen.children).toEqual([]);
     expect(screen.x).toBe(0);
     expect(screen.y).toBe(0);
-    expect(screen.fill).toEqual({
-      type: "solid",
-      color: { r: 255, g: 255, b: 255, a: 1 },
-    });
+    expect(screen.fills).toEqual([]);
     expect(screen.width).toBe(390);
     expect(screen.height).toBe(844);
   });
@@ -39,7 +36,6 @@ describe("screenStyle", () => {
   test("default screen style", () => {
     const screen = createScreen({ id: "s1" });
     const style = screenStyle(screen);
-    expect(style).toContain("background-color: rgba(255,255,255,1)");
     expect(style).toContain("width: 390px");
     expect(style).toContain("height: 844px");
   });

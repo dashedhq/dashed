@@ -2,128 +2,101 @@
   import {
     type Node,
     nodeStyle,
-    type Page,
     paragraphStyle,
-    resolveChildren,
     runStyle,
     screenStyle,
-    type TextNode,
   } from "@dashedhq/core";
-  import type { EditorState } from "prosemirror-state";
-  import type { EditorView } from "prosemirror-view";
 
-  import { docToNode } from "./prosemirror";
+  import { getEditorState } from "./editor-state.svelte";
   import SelectionOverlay from "./selection-overlay.svelte";
   import TextEditor from "./text-editor.svelte";
 
-  type Props = {
-    selection: string | null;
-    page: Page;
-    onTextEditStart: (v: EditorView, s: EditorState) => void;
-    onTextEditEnd: () => void;
-    onTextEditStateChange: (s: EditorState) => void;
-  };
+  const editor = getEditorState();
 
-  let {
-    selection = $bindable(),
-    page = $bindable(),
-    onTextEditStart,
-    onTextEditEnd,
-    onTextEditStateChange,
-  }: Props = $props();
-
-  let editingId = $state<string | null>(null);
-  let editorState = $state.raw<EditorState | null>(null);
-
-  let panX = $state(0);
-  let panY = $state(0);
-  let zoom = $state(1);
   let spaceHeld = $state(false);
   let dragging = $state(false);
 
   let canvasEl = $state<HTMLDivElement>();
 
   $effect(() => {
-    if (!canvasEl) return;
+    if (!canvasEl) {
+      return;
+    }
+    const cleanup = editor.registerCanvasEl(canvasEl);
     const handleWheel = (e: WheelEvent) => {
-      if (!canvasEl) return;
+      if (!canvasEl) {
+        return;
+      }
       e.preventDefault();
       if (e.ctrlKey) {
         const rect = canvasEl.getBoundingClientRect();
         const mx = e.clientX - rect.left - canvasEl.clientLeft;
         const my = e.clientY - rect.top - canvasEl.clientTop;
-        const newZoom = Math.min(
-          Math.max(zoom * Math.pow(2, -e.deltaY / 150), 0.1),
-          10,
-        );
-        panX = mx - ((mx - panX) / zoom) * newZoom;
-        panY = my - ((my - panY) / zoom) * newZoom;
-        zoom = newZoom;
+        editor.applyZoom(mx, my, Math.pow(2, -e.deltaY / 150));
       } else {
-        panX -= e.deltaX;
-        panY -= e.deltaY;
+        editor.pan(-e.deltaX, -e.deltaY);
       }
     };
     canvasEl.addEventListener("wheel", handleWheel, { passive: false });
-    return () => canvasEl?.removeEventListener("wheel", handleWheel);
+    return () => {
+      canvasEl?.removeEventListener("wheel", handleWheel);
+      cleanup();
+    };
   });
 
-  const exitTextEditing = () => {
-    if (editingId && editorState) {
-      const base = page.nodes[editingId] as TextNode;
-      page.nodes[editingId] = docToNode(editorState.doc, base);
+  const isTextEditing = $derived(
+    editor.selectedNode != null && editor.editMode?.type === "text",
+  );
+
+  $effect(() => {
+    const id = editor.selectedNodeId;
+    if (!id || !canvasEl) {
+      return;
     }
-    editorState = null;
-    onTextEditEnd();
-    editingId = null;
-  };
+    const el = canvasEl.querySelector(
+      `[data-id="${id}"]`,
+    ) as HTMLElement | null;
+    if (!el) {
+      return;
+    }
+    return editor.registerSelectedNodeEl(el);
+  });
 </script>
 
 {#snippet renderNode(node: Node)}
   <!-- svelte-ignore a11y_no_static_element_interactions, a11y_click_events_have_key_events -->
   <div
-    data-id={node.id}
     style={nodeStyle(node)}
     class="select-none"
+    data-id={node.id}
     onclick={(e) => {
       e.stopPropagation();
-      if (editingId && editingId !== node.id) {
-        exitTextEditing();
-      }
-      selection = node.id;
+      editor.selectNode(node.id);
     }}
     ondblclick={(e) => {
-      // Also fires onclick twice before this
       e.stopPropagation();
       if (node.type === "text") {
-        selection = node.id;
-        editingId = node.id;
+        editor.startTextEdit();
       }
     }}
   >
-    {#if node.type === "text" && editingId === node.id}
+    {#if node.type === "text" && editor.selectedNodeId === node.id && isTextEditing}
       <TextEditor
         {node}
-        onExit={exitTextEditing}
-        onReady={(v, s) => {
-          editorState = s;
-          onTextEditStart(v, s);
-        }}
-        onStateChange={(s) => {
-          editorState = s;
-          onTextEditStateChange(s);
-        }}
+        onExit={() => editor.stopTextEdit()}
+        onReady={(v, s) => editor.registerTextEditor(v, s)}
+        onStateChange={(s) => editor.updateTextEditorState(s)}
       />
     {:else if node.type === "text"}
       {#each node.content as paragraph, i (i)}
-        <p style={paragraphStyle(paragraph)}>
+        <p style={paragraphStyle(paragraph, node)}>
           {#each paragraph.content as run, j (j)}
-            <span style={runStyle({ ...node, ...run })}>{run.text}</span>
+            <span style={runStyle(run, node)}>{run.text}</span>
           {/each}
         </p>
       {/each}
     {:else if node.type === "frame"}
-      {#each resolveChildren(page.nodes, node.children) as child (child.id)}
+      {#each editor.resolveChildren(node.children) as child (child.id)}
         {@render renderNode(child)}
       {/each}
     {/if}
@@ -132,7 +105,10 @@
 
 <svelte:window
   onkeydown={(e) => {
-    if (e.code === "Space" && !e.repeat && !editingId) {
+    if (!canvasEl) {
+      return;
+    }
+    if (e.code === "Space" && !e.repeat && !isTextEditing) {
       e.preventDefault();
       spaceHeld = true;
     }
@@ -142,16 +118,11 @@
     ) {
       e.preventDefault();
       if (e.code === "Digit0") {
-        zoom = 1;
+        editor.resetZoom();
       } else {
         const factor = e.code === "Equal" ? 1.25 : 0.8;
-        const rect = canvasEl!.getBoundingClientRect();
-        const cx = rect.width / 2;
-        const cy = rect.height / 2;
-        const newZoom = Math.min(Math.max(zoom * factor, 0.1), 10);
-        panX = cx - ((cx - panX) / zoom) * newZoom;
-        panY = cy - ((cy - panY) / zoom) * newZoom;
-        zoom = newZoom;
+        const rect = canvasEl.getBoundingClientRect();
+        editor.applyZoom(rect.width / 2, rect.height / 2, factor);
       }
     }
   }}
@@ -171,51 +142,55 @@
   class="flex-1 bg-neutral-950 border border-neutral-700 rounded-xl overflow-hidden relative
     {spaceHeld ? (dragging ? 'cursor-grabbing' : 'cursor-grab') : ''}"
   onclick={() => {
-    if (dragging) return;
-    exitTextEditing();
-    selection = null;
+    if (dragging) {
+      return;
+    }
+    editor.clearNodeSelection();
   }}
   onpointerdown={(e) => {
-    if (!spaceHeld) return;
+    if (!spaceHeld) {
+      return;
+    }
     e.preventDefault();
     e.stopPropagation();
     dragging = true;
     e.currentTarget.setPointerCapture(e.pointerId);
   }}
   onpointermove={(e) => {
-    if (!dragging) return;
-    panX += e.movementX;
-    panY += e.movementY;
+    if (!dragging) {
+      return;
+    }
+    editor.pan(e.movementX, e.movementY);
   }}
   onpointerup={(e) => {
-    if (!dragging) return;
+    if (!dragging) {
+      return;
+    }
     dragging = false;
     e.currentTarget.releasePointerCapture(e.pointerId);
   }}
 >
   <div
-    style="transform: translate({panX}px, {panY}px) scale({zoom}); transform-origin: 0 0"
+    style="transform: translate({editor.panX}px, {editor.panY}px) scale({editor.zoom}); transform-origin: 0 0"
   >
-    {#each resolveChildren(page.nodes, page.children) as node (node.id)}
+    {#each editor.topLevelNodes as node (node.id)}
       {#if node.type === "screen"}
-        {@const screen = node}
         <div
           class="absolute text-xs text-neutral-400 select-none whitespace-nowrap"
-          style="left: {screen.x}px; top: {screen.y - 24}px"
+          style="left: {node.x}px; top: {node.y - 24}px"
         >
-          {screen.name}
+          {node.name}
         </div>
         <!-- svelte-ignore a11y_no_static_element_interactions, a11y_click_events_have_key_events -->
         <div
-          data-id={screen.id}
           class="absolute overflow-hidden"
-          style="left: {screen.x}px; top: {screen.y}px; {screenStyle(screen)}"
+          style="left: {node.x}px; top: {node.y}px; {screenStyle(node)}"
           onclick={(e) => {
             e.stopPropagation();
-            selection = screen.id;
+            editor.selectNode(node.id);
           }}
         >
-          {#each resolveChildren(page.nodes, screen.children) as child (child.id)}
+          {#each editor.resolveChildren(node.children) as child (child.id)}
             {@render renderNode(child)}
           {/each}
         </div>
@@ -223,13 +198,11 @@
     {/each}
   </div>
 
-  {#if selection}
+  {#if editor.selectedNode && editor.nodeMeasurements && editor.canvasMeasurements}
     <SelectionOverlay
-      {canvasEl}
-      bind:node={page.nodes[selection]}
-      {zoom}
-      {panX}
-      {panY}
+      node={editor.selectedNode}
+      nodeMeasurements={editor.nodeMeasurements}
+      canvasMeasurements={editor.canvasMeasurements}
     />
   {/if}
 </div>
