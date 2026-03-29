@@ -3,6 +3,7 @@ import {
   commonParagraphStyle,
   commonRunStyle,
   type CommonTypographyStyle,
+  createFrame,
   createText,
   type Document,
   effectiveRun,
@@ -230,6 +231,12 @@ export class EditorState {
     if (!patch) {
       return;
     }
+    for (const node of patch.added) {
+      this.#nodes.delete(node.id);
+    }
+    for (const node of patch.removed) {
+      this.#nodes.set(node.id, node);
+    }
     for (const [id, { old }] of Object.entries(patch.updated)) {
       this.#nodes.set(id, old);
     }
@@ -240,6 +247,12 @@ export class EditorState {
     const patch = this.#redoStack.pop();
     if (!patch) {
       return;
+    }
+    for (const node of patch.removed) {
+      this.#nodes.delete(node.id);
+    }
+    for (const node of patch.added) {
+      this.#nodes.set(node.id, node);
     }
     for (const [id, { next }] of Object.entries(patch.updated)) {
       this.#nodes.set(id, next);
@@ -357,6 +370,106 @@ export class EditorState {
 
   clearNodeSelection() {
     this.#setSelection(null);
+  }
+
+  #findParent(nodeId: string): Node | null {
+    for (const node of this.#nodes.values()) {
+      if (
+        (node.type === "frame" || node.type === "screen") &&
+        node.children.includes(nodeId)
+      ) {
+        return node;
+      }
+    }
+    return null;
+  }
+
+  #collectDescendants(nodeId: string): Node[] {
+    const node = this.#nodes.get(nodeId);
+    if (!node) {
+      return [];
+    }
+    const result: Node[] = [node];
+    if (node.type === "frame" || node.type === "screen") {
+      for (const childId of node.children) {
+        result.push(...this.#collectDescendants(childId));
+      }
+    }
+    return result;
+  }
+
+  deleteNode(id: string) {
+    const node = this.#nodes.get(id);
+    if (!node) {
+      throw new Error(`deleteNode: Node ${id} doesn't exist`);
+    }
+    if (node.type === "screen") {
+      return;
+    }
+
+    const parent = this.#findParent(id);
+    if (!parent) {
+      return;
+    }
+
+    const removed = this.#collectDescendants(id);
+    const patch: Patch = { added: [], removed, updated: {} };
+
+    const oldParent = parent;
+    const nextParent = produce(parent, (draft) => {
+      if (draft.type === "frame" || draft.type === "screen") {
+        draft.children = draft.children.filter((c) => c !== id);
+      }
+    });
+    patch.updated[parent.id] = { old: oldParent, next: nextParent };
+    this.#nodes.set(parent.id, nextParent);
+
+    for (const n of removed) {
+      this.#nodes.delete(n.id);
+    }
+
+    this.#undoStack.push(patch);
+    this.#redoStack = [];
+
+    if (this.#selection?.nodeId === id) {
+      this.#setSelection(null);
+    }
+  }
+
+  #addChildNode(parentId: string, node: Node) {
+    const parent = this.#getNodeOrDie(parentId, "addChildNode");
+    if (parent.type !== "frame" && parent.type !== "screen") {
+      throw new Error("addChildNode: Parent must be a frame or screen");
+    }
+
+    const patch: Patch = { added: [node], removed: [], updated: {} };
+
+    const nextParent = produce(parent, (draft) => {
+      if (draft.type === "frame" || draft.type === "screen") {
+        draft.children.push(node.id);
+      }
+    });
+    patch.updated[parent.id] = { old: parent, next: nextParent };
+
+    this.#nodes.set(node.id, node);
+    this.#nodes.set(parent.id, nextParent);
+    this.#undoStack.push(patch);
+    this.#redoStack = [];
+
+    this.selectNode(node.id);
+  }
+
+  addFrame(parentId: string) {
+    const frame = createFrame({ id: `frame_${nanoid(5)}` });
+    this.#addChildNode(parentId, frame);
+  }
+
+  addText(parentId: string) {
+    const text = createText({
+      id: `text_${nanoid(5)}`,
+      content: [{ content: [{ text: "Text" }] }],
+    });
+    this.#addChildNode(parentId, text);
   }
 
   // -- Node property updates --

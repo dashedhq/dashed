@@ -108,21 +108,31 @@
     if (!canvasEl) {
       return;
     }
-    if (e.code === "Space" && !e.repeat && !isTextEditing) {
-      e.preventDefault();
-      spaceHeld = true;
-    }
     const focused = document.activeElement;
     const isInput =
       focused instanceof HTMLInputElement ||
       focused instanceof HTMLTextAreaElement;
-    if ((e.metaKey || e.ctrlKey) && e.code === "KeyZ" && !isInput && !isTextEditing) {
+    if (isInput || isTextEditing) {
+      return;
+    }
+    if (e.code === "Space" && !e.repeat) {
+      e.preventDefault();
+      spaceHeld = true;
+    }
+    if ((e.metaKey || e.ctrlKey) && e.code === "KeyZ") {
       e.preventDefault();
       if (e.shiftKey) {
         editor.redo();
       } else {
         editor.undo();
       }
+    }
+    if (
+      (e.code === "Backspace" || e.code === "Delete") &&
+      editor.selectedNodeId
+    ) {
+      e.preventDefault();
+      editor.deleteNode(editor.selectedNodeId);
     }
     if (
       (e.metaKey || e.ctrlKey) &&

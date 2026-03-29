@@ -32,6 +32,7 @@ function makePage(): Page {
           {
             id: "sf1",
             fill: { type: "solid", color: { r: 255, g: 255, b: 255, a: 1 } },
+            visible: true,
           },
         ],
       }),
@@ -41,6 +42,7 @@ function makePage(): Page {
           {
             id: "ff1",
             fill: { type: "solid", color: { r: 255, g: 0, b: 0, a: 1 } },
+            visible: true,
           },
           {
             id: "ff2",
@@ -59,6 +61,7 @@ function makePage(): Page {
                 ],
               },
             },
+            visible: true,
           },
         ],
       }),
@@ -617,7 +620,9 @@ describe("patch batching", () => {
       n.opacity = 0.5;
     });
     editor.updateFrame("frame-1", (n) => {
-      n.effects = [{ id: "e1", effect: { type: "blur", blur: 4 } }];
+      n.effects = [
+        { id: "e1", effect: { type: "blur", blur: 4 }, visible: true },
+      ];
     });
     editor.commitPatch();
 
@@ -712,7 +717,9 @@ describe("frame effects", () => {
   test("add a blur effect", () => {
     const editor = makeEditor();
     editor.updateFrame("frame-1", (n) => {
-      n.effects = [{ id: "e1", effect: { type: "blur", blur: 4 } }];
+      n.effects = [
+        { id: "e1", effect: { type: "blur", blur: 4 }, visible: true },
+      ];
     });
     const frame = editor.getFrame("frame-1");
     expect(frame.effects).toHaveLength(1);
@@ -735,6 +742,7 @@ describe("frame effects", () => {
               spread: 0,
             },
           },
+          visible: true,
         },
       ];
     });
@@ -745,7 +753,9 @@ describe("frame effects", () => {
   test("undo reverts effect changes", () => {
     const editor = makeEditor();
     editor.updateFrame("frame-1", (n) => {
-      n.effects = [{ id: "e1", effect: { type: "blur", blur: 4 } }];
+      n.effects = [
+        { id: "e1", effect: { type: "blur", blur: 4 }, visible: true },
+      ];
     });
     expect(editor.getFrame("frame-1").effects).toHaveLength(1);
 
