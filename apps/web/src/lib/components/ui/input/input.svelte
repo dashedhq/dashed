@@ -13,7 +13,7 @@
 
 <input
   class={cn(
-    "h-8 px-2 border border-neutral-700 rounded-md text-sm focus:outline-2 focus:outline-neutral-400",
+    "h-7 px-2 border border-neutral-700 rounded-md text-sm focus:outline-2 focus:outline-neutral-400",
     className,
   )}
   bind:value

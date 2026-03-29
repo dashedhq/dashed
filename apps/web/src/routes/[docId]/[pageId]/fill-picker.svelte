@@ -13,6 +13,7 @@
   import ColorPicker from "./color-picker.svelte";
   import { generateStopId } from "./editor-state.svelte";
   import GradientPicker from "./gradient-picker.svelte";
+  import ImagePicker from "./image-picker.svelte";
 
   type Props = Omit<Popover.TriggerProps, "value"> & {
     value: Fill;
@@ -83,19 +84,26 @@
         };
     }
   }
+
+  function toImageFill(fill: Fill): Fill {
+    if (fill.type === "image") {
+      return fill;
+    }
+    return { type: "image", image: { src: "", fit: "cover" } };
+  }
 </script>
 
 <Popover.Root>
   <Popover.Trigger
     class={cn(
-      "flex px-2 gap-2 cursor-pointer items-center border border-neutral-700 h-8 rounded-md text-sm text-neutral-50 data-[state=open]:border-blue-500",
+      "flex px-2 gap-2 cursor-pointer items-center border border-neutral-700 h-7 rounded-md text-sm text-neutral-50 data-[state=open]:border-blue-500",
       className,
     )}
     {...others}
   >
     <span class="size-4 relative">
       <span
-        class="absolute inset-0 bg-[repeating-conic-gradient(var(--color-neutral-600)_0%_25%,transparent_0%_50%)]"
+        class="absolute inset-0 bg-[repeating-conic-gradient(var(--color-neutral-600)_0%_25%,transparent_0%_50%)] bg-size-[16px_16px]"
       ></span>
       <span class="absolute inset-0 z-10" style={fillStyle(value)}> </span>
     </span>
@@ -113,7 +121,7 @@
     side="left"
     sideOffset={8}
     alignOffset={-4}
-    class="bg-neutral-800 border border-neutral-700 shadow-md rounded-lg p-4 w-70 z-10"
+    class="bg-neutral-800 border border-neutral-700 shadow-md rounded-lg p-4 w-64 z-10"
   >
     <TabsRoot
       value={value.type}
@@ -127,6 +135,8 @@
           onValueChange(toSolidFill(value));
         } else if (type === "linear-gradient") {
           onValueChange(toLinearGradientFill(value));
+        } else if (type === "image") {
+          onValueChange(toImageFill(value));
         }
       }}
     >
@@ -156,7 +166,14 @@
           />
         {/if}
       </TabsContent>
-      <TabsContent value="image">Image content</TabsContent>
+      <TabsContent value="image">
+        {#if value.type === "image"}
+          <ImagePicker
+            value={value.image}
+            onValueChange={(v) => onValueChange({ type: "image", image: v })}
+          />
+        {/if}
+      </TabsContent>
     </TabsRoot>
   </Popover.Content>
 </Popover.Root>

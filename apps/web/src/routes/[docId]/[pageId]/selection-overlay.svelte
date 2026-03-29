@@ -1,6 +1,8 @@
 <script lang="ts">
   import type { Node, Size } from "@dashedhq/core";
 
+  import { clampMin } from "$lib/utils";
+
   import {
     type CanvasMeasurements,
     getEditorState,
@@ -96,16 +98,16 @@
     const size: { width?: Size; height?: Size } = {};
 
     if (resizesRight(resizeHandle) && width.type === "fixed") {
-      size.width = { type: "fixed", value: Math.max(1, width.value + dx) };
+      size.width = { type: "fixed", value: clampMin(width.value + dx, 1) };
     }
     if (resizesLeft(resizeHandle) && width.type === "fixed") {
-      size.width = { type: "fixed", value: Math.max(1, width.value - dx) };
+      size.width = { type: "fixed", value: clampMin(width.value - dx, 1) };
     }
     if (resizesBottom(resizeHandle) && height.type === "fixed") {
-      size.height = { type: "fixed", value: Math.max(1, height.value + dy) };
+      size.height = { type: "fixed", value: clampMin(height.value + dy, 1) };
     }
     if (resizesTop(resizeHandle) && height.type === "fixed") {
-      size.height = { type: "fixed", value: Math.max(1, height.value - dy) };
+      size.height = { type: "fixed", value: clampMin(height.value - dy, 1) };
     }
 
     editor.resizeNode(node.id, size);

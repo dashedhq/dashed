@@ -13,13 +13,20 @@
     onChangeEnd: () => void;
   };
 
-  let { value, onValueChange, onChangeStart, onChangeEnd, class: className, ...others }: Props = $props();
+  let {
+    value,
+    onValueChange,
+    onChangeStart,
+    onChangeEnd,
+    class: className,
+    ...others
+  }: Props = $props();
 </script>
 
 <Popover.Root>
   <Popover.Trigger
     class={cn(
-      "flex px-2 gap-2 cursor-pointer items-center border border-neutral-700 h-8 rounded-md text-sm text-neutral-50 data-[state=open]:border-blue-500",
+      "flex px-2 gap-2 cursor-pointer items-center border border-neutral-700 h-7 rounded-md text-sm text-neutral-50 data-[state=open]:border-blue-500",
       className,
     )}
     {...others}
@@ -41,7 +48,7 @@
     side="left"
     sideOffset={8}
     alignOffset={-4}
-    class="bg-neutral-800 border border-neutral-700 shadow-md rounded-lg p-4 w-60"
+    class="bg-neutral-800 border border-neutral-700 shadow-md rounded-lg p-4 w-64 z-10"
   >
     <ColorPicker {value} {onValueChange} {onChangeStart} {onChangeEnd} />
   </Popover.Content>

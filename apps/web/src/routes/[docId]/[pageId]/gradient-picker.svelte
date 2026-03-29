@@ -10,6 +10,7 @@
   import { MinusIcon, PlusIcon } from "@lucide/svelte";
 
   import { Button } from "$lib/components/ui/button";
+  import { clamp } from "$lib/utils";
 
   import ColorInput from "./color-input.svelte";
   import { generateStopId } from "./editor-state.svelte";
@@ -33,8 +34,8 @@
   ): { x: number; y: number } {
     const rect = e.currentTarget.getBoundingClientRect();
     return {
-      x: Math.min(Math.max((e.clientX - rect.left) / rect.width, 0), 1),
-      y: Math.min(Math.max((e.clientY - rect.top) / rect.height, 0), 1),
+      x: clamp((e.clientX - rect.left) / rect.width, 0, 1),
+      y: clamp((e.clientY - rect.top) / rect.height, 0, 1),
     };
   }
 
@@ -70,7 +71,7 @@
 
   function barOffset(e: PointerEvent): number {
     const rect = barEl.getBoundingClientRect();
-    return Math.min(Math.max((e.clientX - rect.left) / rect.width, 0), 1);
+    return clamp((e.clientX - rect.left) / rect.width, 0, 1);
   }
 
   function handleBarClick(e: PointerEvent) {

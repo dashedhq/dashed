@@ -5,14 +5,12 @@ import {
   bordersStyle,
 } from "./styles/border";
 import {
-  backdropBlurStyle,
   type BlendMode,
   blendModeStyle,
-  blurStyle,
+  type EffectLayer,
+  effectLayersStyle,
   opacityStyle,
   rotationStyle,
-  type ShadowLayer,
-  shadowLayersStyle,
 } from "./styles/effect";
 import { type FillLayer, fillLayersStyle } from "./styles/fill";
 import {
@@ -36,12 +34,10 @@ export type FrameStyle = {
   layout: Layout;
   padding: Padding;
   opacity: number;
-  shadows: ShadowLayer[];
+  effects: EffectLayer[];
   position: Position;
   overflow: Overflow;
   blendMode: BlendMode;
-  blur: number;
-  backdropBlur: number;
   rotation: number;
 };
 
@@ -49,11 +45,13 @@ export type FrameNode = {
   id: string;
   name: string;
   type: "frame";
+  visible: boolean;
   children: string[];
 } & FrameStyle;
 
 const frameDefaults: Omit<FrameNode, "id" | "type"> = {
   name: "Frame",
+  visible: true,
   children: [],
   fills: [],
   borders: {
@@ -79,12 +77,10 @@ const frameDefaults: Omit<FrameNode, "id" | "type"> = {
   },
   padding: { top: 0, right: 0, bottom: 0, left: 0 },
   opacity: 1,
-  shadows: [],
+  effects: [],
   position: { type: "auto" },
   overflow: "visible",
   blendMode: "normal",
-  blur: 0,
-  backdropBlur: 0,
   rotation: 0,
 };
 
@@ -103,12 +99,10 @@ export function frameStyle(style: FrameStyle) {
     layoutStyle(style.layout),
     paddingStyle(style.padding),
     opacityStyle(style.opacity),
-    shadowLayersStyle(style.shadows),
+    effectLayersStyle(style.effects),
     positionStyle(style.position),
     overflowStyle(style.overflow),
     blendModeStyle(style.blendMode),
-    blurStyle(style.blur),
-    backdropBlurStyle(style.backdropBlur),
     rotationStyle(style.rotation),
   ].filter((s) => s !== "");
 

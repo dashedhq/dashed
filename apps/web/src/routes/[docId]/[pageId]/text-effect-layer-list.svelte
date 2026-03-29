@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { FillLayer } from "@dashedhq/core";
+  import type { TextEffect, TextEffectLayer } from "@dashedhq/core";
   import { RestrictToVerticalAxis } from "@dnd-kit/abstract/modifiers";
   import { RestrictToElement } from "@dnd-kit/dom/modifiers";
   import { move } from "@dnd-kit/helpers";
@@ -14,11 +14,11 @@
 
   import { Button } from "$lib/components/ui/button";
 
-  import FillPicker from "./fill-picker.svelte";
+  import TextEffectInput from "./text-effect-input.svelte";
 
   type Props = {
-    value: FillLayer[];
-    onValueChange: (layers: FillLayer[]) => void;
+    value: TextEffectLayer[];
+    onValueChange: (layers: TextEffectLayer[]) => void;
     onChangeStart: () => void;
     onChangeEnd: () => void;
   };
@@ -43,8 +43,8 @@
     );
   }
 
-  function updateLayerFill(id: string, fill: FillLayer["fill"]) {
-    onValueChange(value.map((l) => (l.id === id ? { ...l, fill } : l)));
+  function updateLayerEffect(id: string, effect: TextEffect) {
+    onValueChange(value.map((l) => (l.id === id ? { ...l, effect } : l)));
   }
 </script>
 
@@ -71,19 +71,18 @@
         <button {@attach sortable.attachHandle}>
           <GripVerticalIcon class="size-4" />
         </button>
-        <FillPicker
-          value={layer.fill}
-          class="flex-1"
-          onValueChange={(fill) => updateLayerFill(layer.id, fill)}
+        <TextEffectInput
+          value={layer.effect}
+          onValueChange={(effect) => updateLayerEffect(layer.id, effect)}
           {onChangeStart}
           {onChangeEnd}
         />
         <Button size="icon-md" onclick={() => toggleLayer(layer.id)}>
-          {#if layer.visible}<EyeIcon />{:else}<EyeClosedIcon />{/if}</Button
-        >
-        <Button size="icon-md" onclick={() => removeLayer(layer.id)}
-          ><MinusIcon /></Button
-        >
+          {#if layer.visible}<EyeIcon />{:else}<EyeClosedIcon />{/if}
+        </Button>
+        <Button size="icon-md" onclick={() => removeLayer(layer.id)}>
+          <MinusIcon />
+        </Button>
       </div>
     {/each}
   </DragDropProvider>

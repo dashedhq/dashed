@@ -40,6 +40,8 @@ import { EditorView } from "prosemirror-view";
 import { createContext } from "svelte";
 import { SvelteMap } from "svelte/reactivity";
 
+import { clamp } from "$lib/utils";
+
 export const [getEditorState, setEditorState] = createContext<EditorState>();
 
 export function generateStopId() {
@@ -48,6 +50,10 @@ export function generateStopId() {
 
 export function generateFillId() {
   return `fill_${nanoid(5)}`;
+}
+
+export function generateEffectId() {
+  return `effect_${nanoid(5)}`;
 }
 
 const MIN_ZOOM = 0.1;
@@ -109,6 +115,15 @@ export class EditorState {
     this.#nodes = new SvelteMap(Object.entries(page.nodes));
     this.#children = $state(page.children);
     this.topLevelNodes = $derived(this.resolveChildren(this.#children));
+
+    $effect(() => {
+      /* eslint-disable @typescript-eslint/no-unused-expressions */
+      this.#panX;
+      this.#panY;
+      this.#zoom;
+      /* eslint-enable @typescript-eslint/no-unused-expressions */
+      this.#measureNode();
+    });
   }
 
   get selectedNodeId() {
@@ -303,20 +318,17 @@ export class EditorState {
   pan(dx: number, dy: number) {
     this.#panX += dx;
     this.#panY += dy;
-    this.#measureNode();
   }
 
   applyZoom(pivotX: number, pivotY: number, factor: number) {
-    const clamped = Math.min(Math.max(this.#zoom * factor, MIN_ZOOM), MAX_ZOOM);
+    const clamped = clamp(this.#zoom * factor, MIN_ZOOM, MAX_ZOOM);
     this.#panX = pivotX - ((pivotX - this.#panX) / this.#zoom) * clamped;
     this.#panY = pivotY - ((pivotY - this.#panY) / this.#zoom) * clamped;
     this.#zoom = clamped;
-    this.#measureNode();
   }
 
   resetZoom() {
     this.#zoom = 1;
-    this.#measureNode();
   }
 
   #measureNode() {
@@ -354,11 +366,34 @@ export class EditorState {
       if (curr.type !== "frame" && curr.type !== "text") {
         throw new Error("resizeNode: Not a frame or text node");
       }
+      const d = curr.dimensions;
       if (size.width) {
-        curr.dimensions.width = size.width;
+        if (size.width.type === "fixed") {
+          let v = size.width.value;
+          if (v < d.minWidth) {
+            v = d.minWidth;
+          }
+          if (d.maxWidth !== "none" && v > d.maxWidth) {
+            v = d.maxWidth;
+          }
+          d.width = { type: "fixed", value: v };
+        } else {
+          d.width = size.width;
+        }
       }
       if (size.height) {
-        curr.dimensions.height = size.height;
+        if (size.height.type === "fixed") {
+          let v = size.height.value;
+          if (v < d.minHeight) {
+            v = d.minHeight;
+          }
+          if (d.maxHeight !== "none" && v > d.maxHeight) {
+            v = d.maxHeight;
+          }
+          d.height = { type: "fixed", value: v };
+        } else {
+          d.height = size.height;
+        }
       }
     });
   }

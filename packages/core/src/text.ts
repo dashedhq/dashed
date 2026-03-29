@@ -1,12 +1,12 @@
+import { colorToCss } from "./styles/color";
 import {
   type BlendMode,
   blendModeStyle,
   opacityStyle,
   rotationStyle,
-  type TextShadowLayer,
-  textShadowLayersStyle,
+  type TextEffectLayer,
+  textEffectLayersStyle,
 } from "./styles/effect";
-import { colorToCss } from "./styles/color";
 import {
   type FillLayer,
   fillLayersEquals,
@@ -91,7 +91,7 @@ export type TypographyStyle = Required<ParagraphStyle> & Required<RunStyle>;
 
 export type TextStyle = TypographyStyle & {
   dimensions: Dimensions;
-  shadows: TextShadowLayer[];
+  effects: TextEffectLayer[];
   blendMode: BlendMode;
   opacity: number;
   rotation: number;
@@ -101,11 +101,13 @@ export type TextNode = {
   id: string;
   name: string;
   type: "text";
+  visible: boolean;
   content: Paragraph[];
 } & TextStyle;
 
 const textDefaults: Omit<TextNode, "id" | "type" | "content"> = {
   name: "Text",
+  visible: true,
   textAlign: "start",
   fontSize: 16,
   fontFamily: "Inter, sans-serif",
@@ -116,7 +118,7 @@ const textDefaults: Omit<TextNode, "id" | "type" | "content"> = {
   letterSpacing: 0,
   textDecoration: "none",
   textTransform: "none",
-  shadows: [],
+  effects: [],
   blendMode: "normal",
   opacity: 1,
   rotation: 0,
@@ -247,7 +249,10 @@ export function runStyle(run: RunStyle, base?: RunStyle) {
   return parts.join("; ");
 }
 
-export function paragraphStyle(paragraph: ParagraphStyle, base?: ParagraphStyle) {
+export function paragraphStyle(
+  paragraph: ParagraphStyle,
+  base?: ParagraphStyle,
+) {
   const textAlign = paragraph.textAlign ?? base?.textAlign;
   const lineHeight = paragraph.lineHeight ?? base?.lineHeight;
 
@@ -267,7 +272,7 @@ export function paragraphStyle(paragraph: ParagraphStyle, base?: ParagraphStyle)
 export function textStyle(style: TextStyle) {
   const parts: string[] = [
     dimensionsStyle(style.dimensions),
-    textShadowLayersStyle(style.shadows),
+    textEffectLayersStyle(style.effects),
     blendModeStyle(style.blendMode),
     opacityStyle(style.opacity),
     rotationStyle(style.rotation),

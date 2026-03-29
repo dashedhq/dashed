@@ -112,170 +112,6 @@ describe("node selection", () => {
     expect(editor.selectedNodeId).toBeNull();
     expect(editor.selectedNode).toBeNull();
   });
-
-  test("selecting a new node clears gradient edit", () => {
-    const editor = makeEditor();
-    editor.selectNode("frame-1");
-    editor.startGradientEdit("ff2");
-    editor.selectNode("screen-1");
-    expect(editor.gradientEdit).toBeNull();
-  });
-
-  test("selecting a new node clears gradient stop selection", () => {
-    const editor = makeEditor();
-    editor.selectNode("frame-1");
-    editor.startGradientEdit("ff2");
-    editor.selectGradientStop("gs1");
-    editor.selectNode("screen-1");
-    expect(editor.gradientEdit).toBeNull();
-  });
-
-  test("clearing selection cascades to gradient edit and stop", () => {
-    const editor = makeEditor();
-    editor.selectNode("frame-1");
-    editor.startGradientEdit("ff2");
-    editor.selectGradientStop("gs1");
-    editor.clearNodeSelection();
-    expect(editor.gradientEdit).toBeNull();
-  });
-
-  test("selecting a node clears selectedNodeBounds", () => {
-    const editor = makeEditor();
-    editor.selectNode("frame-1");
-    editor.registerSelectedNodeEl(document.createElement("div"));
-    expect(editor.selectedNodeBounds).not.toBeNull();
-
-    editor.selectNode("screen-1");
-    expect(editor.selectedNodeBounds).toBeNull();
-  });
-
-  test("clearing selection clears selectedNodeBounds", () => {
-    const editor = makeEditor();
-    editor.selectNode("frame-1");
-    editor.registerSelectedNodeEl(document.createElement("div"));
-
-    editor.clearNodeSelection();
-    expect(editor.selectedNodeBounds).toBeNull();
-  });
-
-  test("registerSelectedNodeEl sets selectedNodeBounds", () => {
-    const editor = makeEditor();
-    editor.selectNode("frame-1");
-    const el = document.createElement("div");
-    editor.registerSelectedNodeEl(el);
-    expect(editor.selectedNodeBounds).not.toBeNull();
-  });
-});
-
-// -- Fill editing --
-
-describe("gradient editing", () => {
-  test("start and stop editing a gradient", () => {
-    const editor = makeEditor();
-    editor.selectNode("frame-1");
-    editor.startGradientEdit("ff2");
-    expect(editor.gradientEdit?.fillId).toBe("ff2");
-
-    editor.stopGradientEdit();
-    expect(editor.gradientEdit).toBeNull();
-  });
-
-  test("starting gradient edit without a selected node throws", () => {
-    const editor = makeEditor();
-    expect(() => editor.startGradientEdit("ff2")).toThrow();
-  });
-
-  test("starting gradient edit with a non-existent fill throws", () => {
-    const editor = makeEditor();
-    editor.selectNode("frame-1");
-    expect(() => editor.startGradientEdit("nope")).toThrow();
-  });
-
-  test("starting gradient edit on a solid fill throws", () => {
-    const editor = makeEditor();
-    editor.selectNode("frame-1");
-    expect(() => editor.startGradientEdit("ff1")).toThrow();
-  });
-
-  test("no gradient being edited returns null", () => {
-    const editor = makeEditor();
-    expect(editor.gradientEdit).toBeNull();
-    editor.selectNode("frame-1");
-    expect(editor.gradientEdit).toBeNull();
-  });
-
-  test("stopping gradient edit clears stop selection", () => {
-    const editor = makeEditor();
-    editor.selectNode("frame-1");
-    editor.startGradientEdit("ff2");
-    editor.selectGradientStop("gs1");
-    editor.stopGradientEdit();
-    expect(editor.gradientEdit).toBeNull();
-  });
-
-  test("starting gradient edit stops text edit", () => {
-    const editor = makeEditor();
-    const mountEl = document.createElement("div");
-    document.body.appendChild(mountEl);
-    const pmState = PMEditorState.create({ schema });
-    const pmView = new EditorView(mountEl, { state: pmState });
-
-    editor.selectNode("text-1");
-    editor.startTextEdit(pmView, pmState);
-
-    // selectNode triggers stopTextEdit (converts PM doc back)
-    editor.selectNode("frame-1");
-    editor.startGradientEdit("ff2");
-    expect(editor.gradientEdit?.fillId).toBe("ff2");
-    // stopTextEdit created an undo entry
-    expect(editor.canUndo).toBe(true);
-
-    pmView.destroy();
-    mountEl.remove();
-  });
-});
-
-// -- Gradient stop selection --
-
-describe("gradient stop selection", () => {
-  test("select and read a gradient stop", () => {
-    const editor = makeEditor();
-    editor.selectNode("frame-1");
-    editor.startGradientEdit("ff2");
-    editor.selectGradientStop("gs1");
-    expect(editor.gradientEdit?.selectedStopId).toBe("gs1");
-    expect(editor.selectedGradientStop).not.toBeNull();
-    expect(editor.selectedGradientStop!.offset).toBe(0);
-  });
-
-  test("no stop selected returns null", () => {
-    const editor = makeEditor();
-    editor.selectNode("frame-1");
-    editor.startGradientEdit("ff2");
-    expect(editor.selectedGradientStop).toBeNull();
-  });
-
-  test("selecting stop without gradient edit throws", () => {
-    const editor = makeEditor();
-    editor.selectNode("frame-1");
-    expect(() => editor.selectGradientStop("gs1")).toThrow();
-  });
-
-  test("selecting a non-existent stop throws", () => {
-    const editor = makeEditor();
-    editor.selectNode("frame-1");
-    editor.startGradientEdit("ff2");
-    expect(() => editor.selectGradientStop("nope")).toThrow();
-  });
-
-  test("clear gradient stop selection", () => {
-    const editor = makeEditor();
-    editor.selectNode("frame-1");
-    editor.startGradientEdit("ff2");
-    editor.selectGradientStop("gs1");
-    editor.clearGradientStopSelection();
-    expect(editor.gradientEdit?.selectedStopId).toBeNull();
-  });
 });
 
 // -- Text editing --
@@ -307,26 +143,22 @@ describe("text editing", () => {
   test("start and stop text edit", () => {
     const editor = makeEditor();
     editor.selectNode("text-1");
-    editor.startTextEdit(pmView, pmState);
+    editor.startTextEdit();
+    editor.registerTextEditor(pmView, pmState);
 
     editor.stopTextEdit();
-    // stopTextEdit converts PM doc back to node — should not throw
     expect(editor.canUndo).toBe(true);
   });
 
   test("startTextEdit requires a selected node", () => {
     const editor = makeEditor();
-    expect(() => editor.startTextEdit(pmView, pmState)).toThrow();
+    expect(() => editor.startTextEdit()).toThrow();
   });
 
-  test("starting text edit stops gradient edit", () => {
+  test("startTextEdit requires a text node", () => {
     const editor = makeEditor();
     editor.selectNode("frame-1");
-    editor.startGradientEdit("ff2");
-
-    editor.selectNode("text-1");
-    editor.startTextEdit(pmView, pmState);
-    expect(editor.gradientEdit).toBeNull();
+    expect(() => editor.startTextEdit()).toThrow();
   });
 
   test("updateTextEditorState requires active text edit", () => {
@@ -337,32 +169,34 @@ describe("text editing", () => {
   test("update text editor state", () => {
     const editor = makeEditor();
     editor.selectNode("text-1");
-    editor.startTextEdit(pmView, pmState);
+    editor.startTextEdit();
+    editor.registerTextEditor(pmView, pmState);
 
     const newState = PMEditorState.create({ schema });
     editor.updateTextEditorState(newState);
-    // No public getter to verify, but should not throw
   });
 
   test("stopTextEdit is a no-op without active text edit", () => {
     const editor = makeEditor();
-    editor.stopTextEdit(); // should not throw
+    editor.stopTextEdit();
     expect(editor.canUndo).toBe(false);
   });
 
   test("stopTextEdit is a no-op when called after already stopped", () => {
     const editor = makeEditor();
     editor.selectNode("text-1");
-    editor.startTextEdit(pmView, pmState);
+    editor.startTextEdit();
+    editor.registerTextEditor(pmView, pmState);
     editor.stopTextEdit();
-    editor.stopTextEdit(); // second call is a no-op
+    editor.stopTextEdit();
     expect(editor.canUndo).toBe(true);
   });
 
   test("stopTextEdit creates an undo entry", () => {
     const editor = makeEditor();
     editor.selectNode("text-1");
-    editor.startTextEdit(pmView, pmState);
+    editor.startTextEdit();
+    editor.registerTextEditor(pmView, pmState);
     editor.stopTextEdit();
     expect(editor.canUndo).toBe(true);
   });
@@ -371,7 +205,8 @@ describe("text editing", () => {
     const editor = makeEditor();
     const originalNode = editor.getText("text-1");
     editor.selectNode("text-1");
-    editor.startTextEdit(pmView, pmState);
+    editor.startTextEdit();
+    editor.registerTextEditor(pmView, pmState);
     editor.stopTextEdit();
 
     editor.undo();
@@ -392,7 +227,8 @@ describe("typography style", () => {
     const view = new EditorView(el, { state });
 
     editor.selectNode("text-1");
-    editor.startTextEdit(view, state);
+    editor.startTextEdit();
+    editor.registerTextEditor(view, state);
 
     return {
       view,
@@ -421,11 +257,11 @@ describe("typography style", () => {
     };
   }
 
-  // -- resolveTypographyStyle --
+  // -- commonTypographyStyle --
 
   test("returns node defaults when not text editing", () => {
     const editor = makeEditor();
-    const style = editor.resolveTypographyStyle("text-1");
+    const style = editor.commonTypographyStyle("text-1");
     expect(style.fontSize).toBe(16);
     expect(style.fontFamily).toBe("Inter, sans-serif");
     expect(style.fontWeight).toBe(400);
@@ -436,7 +272,7 @@ describe("typography style", () => {
 
   test("throws for non-text node", () => {
     const editor = makeEditor();
-    expect(() => editor.resolveTypographyStyle("frame-1")).toThrow();
+    expect(() => editor.commonTypographyStyle("frame-1")).toThrow();
   });
 
   test("resolves defaults from PM state at cursor with no marks", () => {
@@ -444,7 +280,7 @@ describe("typography style", () => {
     const { cleanup, cursorAtStart } = startEditing(editor);
     cursorAtStart();
 
-    const style = editor.resolveTypographyStyle("text-1");
+    const style = editor.commonTypographyStyle("text-1");
     expect(style.fontSize).toBe(16);
     expect(style.fontWeight).toBe(400);
 
@@ -459,7 +295,7 @@ describe("typography style", () => {
     editor.applyTypographyStyle("text-1", { fontSize: 24 });
     editor.updateTextEditorState(view.state);
 
-    const style = editor.resolveTypographyStyle("text-1");
+    const style = editor.commonTypographyStyle("text-1");
     expect(style.fontSize).toBe(24);
 
     cleanup();
@@ -474,7 +310,7 @@ describe("typography style", () => {
     editor.updateTextEditorState(view.state);
     selectAll();
 
-    const style = editor.resolveTypographyStyle("text-1");
+    const style = editor.commonTypographyStyle("text-1");
     expect(style.fontWeight).toBe(700);
 
     cleanup();
@@ -539,7 +375,6 @@ describe("typography style", () => {
     editor.updateTextEditorState(view.state);
     editor.stopTextEdit();
 
-    // normalizeTextNode promotes uniform run style to node level
     const node = editor.getText("text-1");
     expect(node.fontWeight).toBe(700);
 
@@ -555,7 +390,6 @@ describe("typography style", () => {
     editor.updateTextEditorState(view.state);
     editor.stopTextEdit();
 
-    // normalizeTextNode promotes uniform run style to node level
     const node = editor.getText("text-1");
     expect(node.fontSize).toBe(32);
 
@@ -592,259 +426,9 @@ describe("typography style", () => {
     editor.stopTextEdit();
 
     const node = editor.getText("text-1");
-    // Paragraph-level style should be promoted to node level by normalizeTextNode
     expect(node.textAlign).toBe("center");
 
     cleanup();
-  });
-});
-
-// -- Fill layer CRUD --
-
-describe("fill layer operations", () => {
-  test("add a fill layer and get it back", () => {
-    const editor = makeEditor();
-    const added = editor.addFillLayer("frame-1", {
-      type: "solid",
-      color: { r: 0, g: 0, b: 0, a: 1 },
-    });
-    expect(added.id).toBeDefined();
-    expect(added.fill.type).toBe("solid");
-
-    const frame = editor.getFrame("frame-1");
-    expect(frame.fills.find((l) => l.id === added.id)).toBeDefined();
-  });
-
-  test("add generates unique ids", () => {
-    const editor = makeEditor();
-    const a = editor.addFillLayer("frame-1", {
-      type: "solid",
-      color: { r: 0, g: 0, b: 0, a: 1 },
-    });
-    const b = editor.addFillLayer("frame-1", {
-      type: "solid",
-      color: { r: 0, g: 0, b: 0, a: 1 },
-    });
-    expect(a.id).not.toBe(b.id);
-  });
-
-  test("add to non-existent node throws", () => {
-    const editor = makeEditor();
-    expect(() =>
-      editor.addFillLayer("nope", {
-        type: "solid",
-        color: { r: 0, g: 0, b: 0, a: 1 },
-      }),
-    ).toThrow();
-  });
-
-  test("remove a fill layer", () => {
-    const editor = makeEditor();
-    editor.removeFillLayer("frame-1", "ff1");
-    const frame = editor.getFrame("frame-1");
-    expect(frame.fills.find((l) => l.id === "ff1")).toBeUndefined();
-  });
-
-  test("removing the editing gradient fill clears gradient edit", () => {
-    const editor = makeEditor();
-    editor.selectNode("frame-1");
-    editor.startGradientEdit("ff2");
-    editor.removeFillLayer("frame-1", "ff2");
-    expect(editor.gradientEdit).toBeNull();
-  });
-
-  test("removing a different fill does not clear gradient edit", () => {
-    const editor = makeEditor();
-    editor.selectNode("frame-1");
-    editor.startGradientEdit("ff2");
-    editor.removeFillLayer("frame-1", "ff1");
-    expect(editor.gradientEdit?.fillId).toBe("ff2");
-  });
-
-  test("removing the editing gradient fill clears stop selection", () => {
-    const editor = makeEditor();
-    editor.selectNode("frame-1");
-    editor.startGradientEdit("ff2");
-    editor.selectGradientStop("gs1");
-    editor.removeFillLayer("frame-1", "ff2");
-    expect(editor.gradientEdit).toBeNull();
-  });
-
-  test("update a fill layer", () => {
-    const editor = makeEditor();
-    const blue = {
-      type: "solid" as const,
-      color: { r: 0, g: 0, b: 255, a: 1 },
-    };
-    editor.updateFillLayer("frame-1", "ff1", blue);
-    const frame = editor.getFrame("frame-1");
-    expect(frame.fills.find((l) => l.id === "ff1")!.fill).toEqual(blue);
-  });
-
-  test("update non-existent fill throws", () => {
-    const editor = makeEditor();
-    expect(() =>
-      editor.updateFillLayer("frame-1", "nope", {
-        type: "solid",
-        color: { r: 0, g: 0, b: 0, a: 1 },
-      }),
-    ).toThrow();
-  });
-
-  test("reorder fill layers", () => {
-    const editor = makeEditor();
-    editor.reorderFillLayers("frame-1", ["ff2", "ff1"]);
-    const frame = editor.getFrame("frame-1");
-    expect(frame.fills[0].id).toBe("ff2");
-    expect(frame.fills[1].id).toBe("ff1");
-  });
-
-  test("reorder with wrong length throws", () => {
-    const editor = makeEditor();
-    expect(() => editor.reorderFillLayers("frame-1", ["ff1"])).toThrow();
-  });
-
-  test("reorder with duplicates throws", () => {
-    const editor = makeEditor();
-    expect(() => editor.reorderFillLayers("frame-1", ["ff1", "ff1"])).toThrow();
-  });
-});
-
-// -- Gradient stop CRUD --
-
-describe("gradient stop operations", () => {
-  test("add a gradient stop", () => {
-    const editor = makeEditor();
-    const added = editor.addGradientStop("frame-1", "ff2", {
-      offset: 0.5,
-      color: { r: 128, g: 128, b: 128, a: 1 },
-    });
-    expect(added.id).toBeDefined();
-
-    const frame = editor.getFrame("frame-1");
-    const layer = frame.fills.find((l) => l.id === "ff2")!;
-    expect(layer.fill.type).toBe("linear-gradient");
-    if (layer.fill.type === "linear-gradient") {
-      expect(
-        layer.fill.gradient.stops.find((s) => s.id === added.id),
-      ).toBeDefined();
-    }
-  });
-
-  test("add to a non-gradient fill throws", () => {
-    const editor = makeEditor();
-    expect(() =>
-      editor.addGradientStop("frame-1", "ff1", {
-        offset: 0.5,
-        color: { r: 0, g: 0, b: 0, a: 1 },
-      }),
-    ).toThrow();
-  });
-
-  test("remove a gradient stop", () => {
-    const editor = makeEditor();
-    const added = editor.addGradientStop("frame-1", "ff2", {
-      offset: 0.5,
-      color: { r: 128, g: 128, b: 128, a: 1 },
-    });
-    editor.removeGradientStop("frame-1", "ff2", added.id);
-
-    const frame = editor.getFrame("frame-1");
-    const layer = frame.fills.find((l) => l.id === "ff2")!;
-    if (layer.fill.type === "linear-gradient") {
-      expect(
-        layer.fill.gradient.stops.find((s) => s.id === added.id),
-      ).toBeUndefined();
-    }
-  });
-
-  test("removing the selected stop clears gradient stop selection", () => {
-    const editor = makeEditor();
-    const added = editor.addGradientStop("frame-1", "ff2", {
-      offset: 0.5,
-      color: { r: 128, g: 128, b: 128, a: 1 },
-    });
-    editor.selectNode("frame-1");
-    editor.startGradientEdit("ff2");
-    editor.selectGradientStop(added.id);
-
-    editor.removeGradientStop("frame-1", "ff2", added.id);
-    expect(editor.gradientEdit?.selectedStopId).toBeNull();
-  });
-
-  test("removing a different stop does not clear gradient stop selection", () => {
-    const editor = makeEditor();
-    const added = editor.addGradientStop("frame-1", "ff2", {
-      offset: 0.5,
-      color: { r: 128, g: 128, b: 128, a: 1 },
-    });
-    editor.selectNode("frame-1");
-    editor.startGradientEdit("ff2");
-    editor.selectGradientStop("gs1");
-
-    editor.removeGradientStop("frame-1", "ff2", added.id);
-    expect(editor.gradientEdit?.selectedStopId).toBe("gs1");
-  });
-
-  test("update stop color", () => {
-    const editor = makeEditor();
-    editor.updateGradientStop("frame-1", "ff2", "gs1", {
-      color: { r: 255, g: 0, b: 0, a: 1 },
-    });
-    const frame = editor.getFrame("frame-1");
-    const layer = frame.fills.find((l) => l.id === "ff2")!;
-    if (layer.fill.type === "linear-gradient") {
-      const stop = layer.fill.gradient.stops.find((s) => s.id === "gs1")!;
-      expect(stop.color).toEqual({ r: 255, g: 0, b: 0, a: 1 });
-    }
-  });
-
-  test("update stop offset", () => {
-    const editor = makeEditor();
-    editor.updateGradientStop("frame-1", "ff2", "gs1", { offset: 0.3 });
-    const frame = editor.getFrame("frame-1");
-    const layer = frame.fills.find((l) => l.id === "ff2")!;
-    if (layer.fill.type === "linear-gradient") {
-      const stop = layer.fill.gradient.stops.find((s) => s.id === "gs1")!;
-      expect(stop.offset).toBe(0.3);
-    }
-  });
-});
-
-// -- Change fill type --
-
-describe("change fill type", () => {
-  test("solid to linear-gradient", () => {
-    const editor = makeEditor();
-    editor.changeFillType("frame-1", "ff1", "linear-gradient");
-    const frame = editor.getFrame("frame-1");
-    const layer = frame.fills.find((l) => l.id === "ff1")!;
-    expect(layer.fill.type).toBe("linear-gradient");
-    if (layer.fill.type === "linear-gradient") {
-      expect(layer.fill.gradient.stops.length).toBeGreaterThanOrEqual(2);
-    }
-  });
-
-  test("linear-gradient to solid uses first stop color", () => {
-    const editor = makeEditor();
-    editor.changeFillType("frame-1", "ff2", "solid");
-    const frame = editor.getFrame("frame-1");
-    const layer = frame.fills.find((l) => l.id === "ff2")!;
-    expect(layer.fill.type).toBe("solid");
-    if (layer.fill.type === "solid") {
-      expect(layer.fill.color).toEqual({ r: 0, g: 0, b: 0, a: 1 });
-    }
-  });
-
-  test("same type is a no-op", () => {
-    const editor = makeEditor();
-    editor.changeFillType("frame-1", "ff1", "solid");
-    expect(editor.canUndo).toBe(false);
-  });
-
-  test("non-existent fill throws", () => {
-    const editor = makeEditor();
-    expect(() => editor.changeFillType("frame-1", "nope", "solid")).toThrow();
   });
 });
 
@@ -1014,22 +598,11 @@ describe("undo and redo", () => {
     expect(editor.canRedo).toBe(false);
   });
 
-  test("undo reverts fill layer addition", () => {
-    const editor = makeEditor();
-    const before = editor.getFrame("frame-1").fills.length;
-    editor.addFillLayer("frame-1", {
-      type: "solid",
-      color: { r: 0, g: 0, b: 0, a: 1 },
-    });
-    expect(editor.getFrame("frame-1").fills.length).toBe(before + 1);
-
-    editor.undo();
-    expect(editor.getFrame("frame-1").fills.length).toBe(before);
-  });
-
   test("no-op update does not create an undo entry", () => {
     const editor = makeEditor();
-    editor.changeFillType("frame-1", "ff1", "solid");
+    editor.updateFrame("frame-1", (n) => {
+      n.opacity = 1; // same as default
+    });
     expect(editor.canUndo).toBe(false);
   });
 });
@@ -1044,16 +617,17 @@ describe("patch batching", () => {
       n.opacity = 0.5;
     });
     editor.updateFrame("frame-1", (n) => {
-      n.blur = 4;
+      n.effects = [{ id: "e1", effect: { type: "blur", blur: 4 } }];
     });
     editor.commitPatch();
 
     expect(editor.getFrame("frame-1").opacity).toBe(0.5);
-    expect(editor.getFrame("frame-1").blur).toBe(4);
+    expect(editor.getFrame("frame-1").effects).toHaveLength(1);
+    expect(editor.getFrame("frame-1").effects[0].effect.type).toBe("blur");
 
     editor.undo();
     expect(editor.getFrame("frame-1").opacity).toBe(1);
-    expect(editor.getFrame("frame-1").blur).toBe(0);
+    expect(editor.getFrame("frame-1").effects).toHaveLength(0);
   });
 
   test("commitPatch without beginPatch throws", () => {
@@ -1071,5 +645,111 @@ describe("resolveChildren", () => {
     expect(nodes).toHaveLength(2);
     expect(nodes[0].id).toBe("screen-1");
     expect(nodes[1].id).toBe("frame-1");
+  });
+});
+
+// -- Resize --
+
+describe("resizeNode", () => {
+  test("resize frame width", () => {
+    const editor = makeEditor();
+    editor.resizeNode("frame-1", { width: { type: "fixed", value: 200 } });
+    const frame = editor.getFrame("frame-1");
+    expect(frame.dimensions.width).toEqual({ type: "fixed", value: 200 });
+  });
+
+  test("resize frame height", () => {
+    const editor = makeEditor();
+    editor.resizeNode("frame-1", { height: { type: "fixed", value: 300 } });
+    const frame = editor.getFrame("frame-1");
+    expect(frame.dimensions.height).toEqual({ type: "fixed", value: 300 });
+  });
+
+  test("resize clamps to minWidth", () => {
+    const editor = makeEditor();
+    editor.updateFrame("frame-1", (n) => {
+      n.dimensions.minWidth = 100;
+    });
+    editor.resizeNode("frame-1", { width: { type: "fixed", value: 50 } });
+    const frame = editor.getFrame("frame-1");
+    expect(frame.dimensions.width).toEqual({ type: "fixed", value: 100 });
+  });
+
+  test("resize clamps to maxWidth", () => {
+    const editor = makeEditor();
+    editor.updateFrame("frame-1", (n) => {
+      n.dimensions.maxWidth = 500;
+    });
+    editor.resizeNode("frame-1", { width: { type: "fixed", value: 600 } });
+    const frame = editor.getFrame("frame-1");
+    expect(frame.dimensions.width).toEqual({ type: "fixed", value: 500 });
+  });
+
+  test("resize to fill mode", () => {
+    const editor = makeEditor();
+    editor.resizeNode("frame-1", { width: { type: "fill" } });
+    const frame = editor.getFrame("frame-1");
+    expect(frame.dimensions.width).toEqual({ type: "fill" });
+  });
+
+  test("resize non-frame/text throws", () => {
+    const editor = makeEditor();
+    expect(() =>
+      editor.resizeNode("screen-1", { width: { type: "fixed", value: 200 } }),
+    ).toThrow();
+  });
+});
+
+// -- Effects --
+
+describe("frame effects", () => {
+  test("frame starts with empty effects", () => {
+    const editor = makeEditor();
+    const frame = editor.getFrame("frame-1");
+    expect(frame.effects).toEqual([]);
+  });
+
+  test("add a blur effect", () => {
+    const editor = makeEditor();
+    editor.updateFrame("frame-1", (n) => {
+      n.effects = [{ id: "e1", effect: { type: "blur", blur: 4 } }];
+    });
+    const frame = editor.getFrame("frame-1");
+    expect(frame.effects).toHaveLength(1);
+    expect(frame.effects[0].effect).toEqual({ type: "blur", blur: 4 });
+  });
+
+  test("add a drop shadow effect", () => {
+    const editor = makeEditor();
+    editor.updateFrame("frame-1", (n) => {
+      n.effects = [
+        {
+          id: "e1",
+          effect: {
+            type: "drop-shadow",
+            shadow: {
+              color: { r: 0, g: 0, b: 0, a: 0.5 },
+              x: 0,
+              y: 2,
+              blur: 8,
+              spread: 0,
+            },
+          },
+        },
+      ];
+    });
+    const frame = editor.getFrame("frame-1");
+    expect(frame.effects[0].effect.type).toBe("drop-shadow");
+  });
+
+  test("undo reverts effect changes", () => {
+    const editor = makeEditor();
+    editor.updateFrame("frame-1", (n) => {
+      n.effects = [{ id: "e1", effect: { type: "blur", blur: 4 } }];
+    });
+    expect(editor.getFrame("frame-1").effects).toHaveLength(1);
+
+    editor.undo();
+    expect(editor.getFrame("frame-1").effects).toHaveLength(0);
   });
 });

@@ -26,13 +26,15 @@
 
 <div
   class={cn(
-    "text-neutral-50 text-sm border border-neutral-700 rounded-md px-2 h-8 flex items-center gap-2 focus-within:border-blue-500",
+    "text-neutral-50 text-sm border border-neutral-700 rounded-md px-2 h-7 flex items-center gap-2 focus-within:border-blue-500",
     className,
   )}
 >
-  <div class="text-neutral-400 [&_svg]:size-4">
-    {@render startDecorator?.()}
-  </div>
+  {#if startDecorator}
+    <div class="text-neutral-400 [&_svg]:size-4">
+      {@render startDecorator()}
+    </div>
+  {/if}
   <input
     class="min-w-0 flex-1 outline-none"
     {placeholder}

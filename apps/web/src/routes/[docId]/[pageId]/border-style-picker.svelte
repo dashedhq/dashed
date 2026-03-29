@@ -15,7 +15,7 @@
   type="single"
   {value}
   onValueChange={(v) => onValueChange(v as BorderStyle)}
-  class="grid grid-cols-3 bg-neutral-800 h-8 rounded-md"
+  class="grid grid-cols-3 bg-neutral-800 h-7 rounded-md"
 >
   <ToggleGroup.Item
     value="solid"

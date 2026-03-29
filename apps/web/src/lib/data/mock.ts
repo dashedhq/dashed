@@ -55,7 +55,7 @@ function solid(color: Color) {
 let nextFillId = 0;
 function bg(color: Color) {
   const id = `fill-${++nextFillId}`;
-  return { fills: [{ id, fill: solid(color) }] };
+  return { fills: [{ id, fill: solid(color), visible: true }] };
 }
 
 const allBorders = {
@@ -87,14 +87,25 @@ function buildAuthPage(): { nodes: Record<string, Node>; children: string[] } {
       content: [
         {
           content: [
-            { text: "Acme", fills: [{ id: `fill-${++nextFillId}`, fill: solid(zinc950) }] },
+            {
+              text: "Acme",
+              fills: [
+                {
+                  id: `fill-${++nextFillId}`,
+                  fill: solid(zinc950),
+                  visible: true,
+                },
+              ],
+            },
             { text: " Inc" },
           ],
         },
       ],
       fontSize: 16,
       fontWeight: 700,
-      fills: [{ id: `fill-${++nextFillId}`, fill: solid(zinc950) }],
+      fills: [
+        { id: `fill-${++nextFillId}`, fill: solid(zinc950), visible: true },
+      ],
     }),
   );
 
@@ -124,7 +135,9 @@ function buildAuthPage(): { nodes: Record<string, Node>; children: string[] } {
       content: [t("Sign in")],
       fontSize: 24,
       fontWeight: 600,
-      fills: [{ id: `fill-${++nextFillId}`, fill: solid(zinc950) }],
+      fills: [
+        { id: `fill-${++nextFillId}`, fill: solid(zinc950), visible: true },
+      ],
     }),
   );
 
@@ -134,7 +147,9 @@ function buildAuthPage(): { nodes: Record<string, Node>; children: string[] } {
       name: "Description",
       content: [t("Enter your email below to sign in to your account")],
       fontSize: 14,
-      fills: [{ id: `fill-${++nextFillId}`, fill: solid(zinc500) }],
+      fills: [
+        { id: `fill-${++nextFillId}`, fill: solid(zinc500), visible: true },
+      ],
     }),
   );
 
@@ -144,7 +159,9 @@ function buildAuthPage(): { nodes: Record<string, Node>; children: string[] } {
       name: "Email Label",
       content: [t("Email")],
       fontSize: 14,
-      fills: [{ id: `fill-${++nextFillId}`, fill: solid(zinc950) }],
+      fills: [
+        { id: `fill-${++nextFillId}`, fill: solid(zinc950), visible: true },
+      ],
     }),
   );
 
@@ -154,7 +171,9 @@ function buildAuthPage(): { nodes: Record<string, Node>; children: string[] } {
       name: "Placeholder",
       content: [t("m@example.com")],
       fontSize: 14,
-      fills: [{ id: `fill-${++nextFillId}`, fill: solid(zinc500) }],
+      fills: [
+        { id: `fill-${++nextFillId}`, fill: solid(zinc500), visible: true },
+      ],
     }),
   );
 
@@ -184,7 +203,9 @@ function buildAuthPage(): { nodes: Record<string, Node>; children: string[] } {
       name: "Password Label",
       content: [t("Password")],
       fontSize: 14,
-      fills: [{ id: `fill-${++nextFillId}`, fill: solid(zinc950) }],
+      fills: [
+        { id: `fill-${++nextFillId}`, fill: solid(zinc950), visible: true },
+      ],
     }),
   );
 
@@ -194,7 +215,9 @@ function buildAuthPage(): { nodes: Record<string, Node>; children: string[] } {
       name: "Placeholder",
       content: [t("\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022")],
       fontSize: 14,
-      fills: [{ id: `fill-${++nextFillId}`, fill: solid(zinc500) }],
+      fills: [
+        { id: `fill-${++nextFillId}`, fill: solid(zinc500), visible: true },
+      ],
     }),
   );
 
@@ -225,7 +248,9 @@ function buildAuthPage(): { nodes: Record<string, Node>; children: string[] } {
       content: [t("Sign In")],
       fontSize: 14,
       fontWeight: 500,
-      fills: [{ id: `fill-${++nextFillId}`, fill: solid(white) }],
+      fills: [
+        { id: `fill-${++nextFillId}`, fill: solid(white), visible: true },
+      ],
       textAlign: "center",
     }),
   );
@@ -254,7 +279,9 @@ function buildAuthPage(): { nodes: Record<string, Node>; children: string[] } {
       name: "Forgot Password",
       content: [t("Forgot your password?")],
       fontSize: 12,
-      fills: [{ id: `fill-${++nextFillId}`, fill: solid(zinc500) }],
+      fills: [
+        { id: `fill-${++nextFillId}`, fill: solid(zinc500), visible: true },
+      ],
       textAlign: "center",
     }),
   );
@@ -285,15 +312,19 @@ function buildAuthPage(): { nodes: Record<string, Node>; children: string[] } {
       padding: pad(32, 24),
       borderRadius: radius(12),
       borders: allBorders,
-      shadows: [
+      effects: [
         {
-          id: `shadow-${++nextFillId}`,
-          shadow: {
-            color: { r: 0, g: 0, b: 0, a: 0.08 },
-            x: 0,
-            y: 2,
-            blur: 8,
-            spread: 0,
+          id: `effect-${++nextFillId}`,
+          visible: true,
+          effect: {
+            type: "drop-shadow",
+            shadow: {
+              color: { r: 0, g: 0, b: 0, a: 0.08 },
+              x: 0,
+              y: 2,
+              blur: 8,
+              spread: 0,
+            },
           },
         },
       ],
@@ -356,7 +387,9 @@ function buildAuthPage(): { nodes: Record<string, Node>; children: string[] } {
       content: [t("Acme Inc")],
       fontSize: 16,
       fontWeight: 700,
-      fills: [{ id: `fill-${++nextFillId}`, fill: solid(zinc950) }],
+      fills: [
+        { id: `fill-${++nextFillId}`, fill: solid(zinc950), visible: true },
+      ],
     }),
   );
 
@@ -386,7 +419,9 @@ function buildAuthPage(): { nodes: Record<string, Node>; children: string[] } {
       content: [t("Create an account")],
       fontSize: 24,
       fontWeight: 600,
-      fills: [{ id: `fill-${++nextFillId}`, fill: solid(zinc950) }],
+      fills: [
+        { id: `fill-${++nextFillId}`, fill: solid(zinc950), visible: true },
+      ],
     }),
   );
 
@@ -396,7 +431,9 @@ function buildAuthPage(): { nodes: Record<string, Node>; children: string[] } {
       name: "Description",
       content: [t("Enter your information to get started")],
       fontSize: 14,
-      fills: [{ id: `fill-${++nextFillId}`, fill: solid(zinc500) }],
+      fills: [
+        { id: `fill-${++nextFillId}`, fill: solid(zinc500), visible: true },
+      ],
     }),
   );
 
@@ -407,7 +444,9 @@ function buildAuthPage(): { nodes: Record<string, Node>; children: string[] } {
         name: `${label} Label`,
         content: [t(label)],
         fontSize: 14,
-        fills: [{ id: `fill-${++nextFillId}`, fill: solid(zinc950) }],
+        fills: [
+          { id: `fill-${++nextFillId}`, fill: solid(zinc950), visible: true },
+        ],
       }),
     );
     const ph = add(
@@ -416,7 +455,9 @@ function buildAuthPage(): { nodes: Record<string, Node>; children: string[] } {
         name: "Placeholder",
         content: [t(placeholder)],
         fontSize: 14,
-        fills: [{ id: `fill-${++nextFillId}`, fill: solid(zinc500) }],
+        fills: [
+          { id: `fill-${++nextFillId}`, fill: solid(zinc500), visible: true },
+        ],
       }),
     );
     const input = add(
@@ -456,7 +497,9 @@ function buildAuthPage(): { nodes: Record<string, Node>; children: string[] } {
       content: [t("Create Account")],
       fontSize: 14,
       fontWeight: 500,
-      fills: [{ id: `fill-${++nextFillId}`, fill: solid(white) }],
+      fills: [
+        { id: `fill-${++nextFillId}`, fill: solid(white), visible: true },
+      ],
       textAlign: "center",
     }),
   );
@@ -485,7 +528,9 @@ function buildAuthPage(): { nodes: Record<string, Node>; children: string[] } {
       name: "Sign In Link",
       content: [t("Already have an account? Sign in")],
       fontSize: 12,
-      fills: [{ id: `fill-${++nextFillId}`, fill: solid(zinc500) }],
+      fills: [
+        { id: `fill-${++nextFillId}`, fill: solid(zinc500), visible: true },
+      ],
       textAlign: "center",
     }),
   );
@@ -518,15 +563,19 @@ function buildAuthPage(): { nodes: Record<string, Node>; children: string[] } {
       padding: pad(32, 24),
       borderRadius: radius(12),
       borders: allBorders,
-      shadows: [
+      effects: [
         {
-          id: `shadow-${++nextFillId}`,
-          shadow: {
-            color: { r: 0, g: 0, b: 0, a: 0.08 },
-            x: 0,
-            y: 2,
-            blur: 8,
-            spread: 0,
+          id: `effect-${++nextFillId}`,
+          visible: true,
+          effect: {
+            type: "drop-shadow",
+            shadow: {
+              color: { r: 0, g: 0, b: 0, a: 0.08 },
+              x: 0,
+              y: 2,
+              blur: 8,
+              spread: 0,
+            },
           },
         },
       ],
@@ -604,7 +653,9 @@ function buildDashboardPage(): {
       content: [t("Acme Inc")],
       fontSize: 16,
       fontWeight: 700,
-      fills: [{ id: `fill-${++nextFillId}`, fill: solid(white) }],
+      fills: [
+        { id: `fill-${++nextFillId}`, fill: solid(white), visible: true },
+      ],
     }),
   );
 
@@ -620,6 +671,7 @@ function buildDashboardPage(): {
           {
             id: `fill-${++nextFillId}`,
             fill: solid(active ? zinc50 : zinc400),
+            visible: true,
           },
         ],
       }),
@@ -692,7 +744,9 @@ function buildDashboardPage(): {
       content: [t("Dashboard")],
       fontSize: 16,
       fontWeight: 600,
-      fills: [{ id: `fill-${++nextFillId}`, fill: solid(zinc950) }],
+      fills: [
+        { id: `fill-${++nextFillId}`, fill: solid(zinc950), visible: true },
+      ],
     }),
   );
 
@@ -724,7 +778,9 @@ function buildDashboardPage(): {
         name: "Label",
         content: [t(label)],
         fontSize: 12,
-        fills: [{ id: `fill-${++nextFillId}`, fill: solid(zinc500) }],
+        fills: [
+          { id: `fill-${++nextFillId}`, fill: solid(zinc500), visible: true },
+        ],
       }),
     );
     const val = add(
@@ -734,7 +790,9 @@ function buildDashboardPage(): {
         content: [t(value)],
         fontSize: 28,
         fontWeight: 600,
-        fills: [{ id: `fill-${++nextFillId}`, fill: solid(zinc950) }],
+        fills: [
+          { id: `fill-${++nextFillId}`, fill: solid(zinc950), visible: true },
+        ],
         letterSpacing: -0.5,
       }),
     );
@@ -795,7 +853,9 @@ function buildDashboardPage(): {
         name: "Name",
         content: [t(name)],
         fontSize: 14,
-        fills: [{ id: `fill-${++nextFillId}`, fill: solid(zinc950) }],
+        fills: [
+          { id: `fill-${++nextFillId}`, fill: solid(zinc950), visible: true },
+        ],
       }),
     );
     const statusText = add(
@@ -804,7 +864,13 @@ function buildDashboardPage(): {
         name: "Status",
         content: [t(status)],
         fontSize: 12,
-        fills: [{ id: `fill-${++nextFillId}`, fill: solid(statusColor) }],
+        fills: [
+          {
+            id: `fill-${++nextFillId}`,
+            fill: solid(statusColor),
+            visible: true,
+          },
+        ],
       }),
     );
     const spacer = add(
@@ -821,7 +887,9 @@ function buildDashboardPage(): {
         name: "Amount",
         content: [t(amount)],
         fontSize: 14,
-        fills: [{ id: `fill-${++nextFillId}`, fill: solid(zinc950) }],
+        fills: [
+          { id: `fill-${++nextFillId}`, fill: solid(zinc950), visible: true },
+        ],
         textAlign: "end",
       }),
     );
@@ -851,7 +919,9 @@ function buildDashboardPage(): {
       content: [t("Recent Orders")],
       fontSize: 16,
       fontWeight: 600,
-      fills: [{ id: `fill-${++nextFillId}`, fill: solid(zinc950) }],
+      fills: [
+        { id: `fill-${++nextFillId}`, fill: solid(zinc950), visible: true },
+      ],
     }),
   );
 
@@ -873,7 +943,9 @@ function buildDashboardPage(): {
       name: "Customer",
       content: [t("Customer")],
       fontSize: 12,
-      fills: [{ id: `fill-${++nextFillId}`, fill: solid(zinc500) }],
+      fills: [
+        { id: `fill-${++nextFillId}`, fill: solid(zinc500), visible: true },
+      ],
     }),
   );
   const thStatusText = add(
@@ -882,7 +954,9 @@ function buildDashboardPage(): {
       name: "Status",
       content: [t("Status")],
       fontSize: 12,
-      fills: [{ id: `fill-${++nextFillId}`, fill: solid(zinc500) }],
+      fills: [
+        { id: `fill-${++nextFillId}`, fill: solid(zinc500), visible: true },
+      ],
     }),
   );
   const thStatusSpacer = add(
@@ -899,7 +973,9 @@ function buildDashboardPage(): {
       name: "Amount",
       content: [t("Amount")],
       fontSize: 12,
-      fills: [{ id: `fill-${++nextFillId}`, fill: solid(zinc500) }],
+      fills: [
+        { id: `fill-${++nextFillId}`, fill: solid(zinc500), visible: true },
+      ],
       textAlign: "end",
     }),
   );

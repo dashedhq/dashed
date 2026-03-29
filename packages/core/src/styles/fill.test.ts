@@ -7,7 +7,6 @@ import {
   fillLayersEquals,
   fillLayersStyle,
   fillsEquals,
-  fillsStyle,
   fillStyle,
   gradientStopPosition,
   imageEquals,
@@ -198,19 +197,19 @@ describe("updateGradientStop", () => {
 describe("imageToCss", () => {
   test("cover", () => {
     expect(imageToCss({ src: "test.png", fit: "cover" })).toBe(
-      "url(test.png) center/cover",
+      "url(test.png) center/cover no-repeat",
     );
   });
 
   test("contain", () => {
     expect(imageToCss({ src: "photo.jpg", fit: "contain" })).toBe(
-      "url(photo.jpg) center/contain",
+      "url(photo.jpg) center/contain no-repeat",
     );
   });
 
   test("fill", () => {
     expect(imageToCss({ src: "bg.svg", fit: "fill" })).toBe(
-      "url(bg.svg) center/fill",
+      "url(bg.svg) center/100% 100% no-repeat",
     );
   });
 });
@@ -249,7 +248,7 @@ describe("fillStyle", () => {
   test("image fill", () => {
     expect(
       fillStyle({ type: "image", image: { src: "test.png", fit: "cover" } }),
-    ).toBe("background: url(test.png) center/cover");
+    ).toBe("background: url(test.png) center/cover no-repeat");
   });
 });
 
@@ -369,28 +368,6 @@ describe("imageEquals", () => {
   });
 });
 
-describe("fillsStyle", () => {
-  test("empty array returns empty string", () => {
-    expect(fillsStyle([])).toBe("");
-  });
-
-  test("single fill delegates to fillStyle", () => {
-    expect(
-      fillsStyle([{ type: "solid", color: { r: 255, g: 0, b: 0, a: 1 } }]),
-    ).toBe("background: rgba(255,0,0,1)");
-  });
-
-  test("multiple fills uses image syntax", () => {
-    const result = fillsStyle([
-      { type: "solid", color: { r: 255, g: 0, b: 0, a: 1 } },
-      { type: "solid", color: { r: 0, g: 0, b: 255, a: 1 } },
-    ]);
-    expect(result).toBe(
-      "background: linear-gradient(rgba(255,0,0,1), rgba(255,0,0,1)), linear-gradient(rgba(0,0,255,1), rgba(0,0,255,1))",
-    );
-  });
-});
-
 describe("fillsEquals", () => {
   const red: Fill = { type: "solid", color: { r: 255, g: 0, b: 0, a: 1 } };
   const blue: Fill = { type: "solid", color: { r: 0, g: 0, b: 255, a: 1 } };
@@ -415,13 +392,31 @@ describe("fillsEquals", () => {
 describe("fillLayersStyle", () => {
   test("generates style from layers", () => {
     const layers: FillLayer[] = [
-      { id: "a", fill: { type: "solid", color: { r: 255, g: 0, b: 0, a: 1 } } },
+      { id: "a", fill: { type: "solid", color: { r: 255, g: 0, b: 0, a: 1 } }, visible: true },
     ];
     expect(fillLayersStyle(layers)).toBe("background: rgba(255,0,0,1)");
   });
 
   test("empty layers returns empty string", () => {
     expect(fillLayersStyle([])).toBe("");
+  });
+
+  test("multiple visible fills uses image syntax", () => {
+    const layers: FillLayer[] = [
+      { id: "a", fill: { type: "solid", color: { r: 255, g: 0, b: 0, a: 1 } }, visible: true },
+      { id: "b", fill: { type: "solid", color: { r: 0, g: 0, b: 255, a: 1 } }, visible: true },
+    ];
+    expect(fillLayersStyle(layers)).toBe(
+      "background: linear-gradient(rgba(255,0,0,1), rgba(255,0,0,1)), linear-gradient(rgba(0,0,255,1), rgba(0,0,255,1))",
+    );
+  });
+
+  test("hidden layers are excluded", () => {
+    const layers: FillLayer[] = [
+      { id: "a", fill: { type: "solid", color: { r: 255, g: 0, b: 0, a: 1 } }, visible: false },
+      { id: "b", fill: { type: "solid", color: { r: 0, g: 0, b: 255, a: 1 } }, visible: true },
+    ];
+    expect(fillLayersStyle(layers)).toBe("background: rgba(0,0,255,1)");
   });
 });
 
@@ -431,17 +426,17 @@ describe("fillLayersEquals", () => {
 
   test("equal layers", () => {
     expect(
-      fillLayersEquals([{ id: "a", fill: red }], [{ id: "b", fill: red }]),
+      fillLayersEquals([{ id: "a", fill: red, visible: true }], [{ id: "b", fill: red, visible: true }]),
     ).toBe(true);
   });
 
   test("different fills", () => {
     expect(
-      fillLayersEquals([{ id: "a", fill: red }], [{ id: "a", fill: blue }]),
+      fillLayersEquals([{ id: "a", fill: red, visible: true }], [{ id: "a", fill: blue, visible: true }]),
     ).toBe(false);
   });
 
   test("different lengths", () => {
-    expect(fillLayersEquals([{ id: "a", fill: red }], [])).toBe(false);
+    expect(fillLayersEquals([{ id: "a", fill: red, visible: true }], [])).toBe(false);
   });
 });

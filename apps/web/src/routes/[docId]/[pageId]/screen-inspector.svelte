@@ -28,6 +28,7 @@
             {
               id: generateFillId(),
               fill: { type: "solid", color: { r: 0, g: 0, b: 0, a: 1 } },
+              visible: true,
             },
           ];
         })}><PlusIcon /></Button
@@ -46,7 +47,8 @@
   <div class="grid grid-cols-2 gap-2">
     <NumberInput
       value={screen.width}
-      onValueChange={(v) => editor.updateScreen(screen.id, (n) => (n.width = v))}
+      onValueChange={(v) =>
+        editor.updateScreen(screen.id, (n) => (n.width = v))}
     >
       {#snippet startDecorator()}
         W
@@ -54,7 +56,8 @@
     </NumberInput>
     <NumberInput
       value={screen.height}
-      onValueChange={(v) => editor.updateScreen(screen.id, (n) => (n.height = v))}
+      onValueChange={(v) =>
+        editor.updateScreen(screen.id, (n) => (n.height = v))}
     >
       {#snippet startDecorator()}
         H

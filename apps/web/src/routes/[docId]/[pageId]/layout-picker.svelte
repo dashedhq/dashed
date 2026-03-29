@@ -47,7 +47,7 @@
       });
     }
   }}
-  class="grid grid-cols-3 bg-neutral-800 h-8 rounded-md text-sm"
+  class="grid grid-cols-3 bg-neutral-800 h-7 rounded-md text-sm"
 >
   <ToggleGroup.Item
     value="hstack"

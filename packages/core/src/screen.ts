@@ -12,11 +12,13 @@ export type ScreenNode = {
   id: string;
   name: string;
   type: "screen";
+  visible: boolean;
   children: string[];
 } & ScreenStyle;
 
 const screenDefaults: Omit<ScreenNode, "id" | "type"> = {
   name: "Screen",
+  visible: true,
   children: [],
   x: 0,
   y: 0,

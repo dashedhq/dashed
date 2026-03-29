@@ -76,9 +76,9 @@ export function addGradientStop(
   if (left && right && left !== right) {
     const t = (offset - left.offset) / (right.offset - left.offset);
     color = {
-      r: Math.round(left.color.r + (right.color.r - left.color.r) * t),
-      g: Math.round(left.color.g + (right.color.g - left.color.g) * t),
-      b: Math.round(left.color.b + (right.color.b - left.color.b) * t),
+      r: round(left.color.r + (right.color.r - left.color.r) * t, 0),
+      g: round(left.color.g + (right.color.g - left.color.g) * t, 0),
+      b: round(left.color.b + (right.color.b - left.color.b) * t, 0),
       a: left.color.a + (right.color.a - left.color.a) * t,
     };
   } else if (left) {
@@ -186,7 +186,8 @@ export function imageEquals(a: Image, b: Image) {
 }
 
 export function imageToCss(image: Image) {
-  return `url(${image.src}) center/${image.fit}`;
+  const size = image.fit === "fill" ? "100% 100%" : image.fit;
+  return `url(${image.src}) center/${size} no-repeat`;
 }
 
 export type SolidFill = { type: "solid"; color: Color };
@@ -201,6 +202,7 @@ export type Fill = SolidFill | LinearGradientFill | ImageFill;
 export type FillLayer = {
   id: string;
   fill: Fill;
+  visible: boolean;
 };
 
 function fillAsImage(fill: Fill) {
@@ -223,7 +225,7 @@ export function fillStyle(fill: Fill) {
   return `background: ${fillAsImage(fill)}`;
 }
 
-export function fillsStyle(fills: Fill[]) {
+function fillsStyle(fills: Fill[]) {
   if (fills.length === 0) {
     return "";
   }
@@ -257,7 +259,7 @@ export function fillsEquals(a: Fill[], b: Fill[]) {
 }
 
 export function fillLayersStyle(layers: FillLayer[]) {
-  return fillsStyle(layers.map((l) => l.fill));
+  return fillsStyle(layers.filter((l) => l.visible).map((l) => l.fill));
 }
 
 export function fillLayersEquals(a: FillLayer[], b: FillLayer[]) {

@@ -65,7 +65,7 @@
 >
   <ToggleGroup.Item
     value="start-start"
-    class="rounded-md cursor-pointer border border-transparent h-8 flex justify-center items-center text-neutral-400 [&_svg]:size-4 data-[state=on]:text-blue-500"
+    class="rounded-md cursor-pointer border border-transparent h-7 flex justify-center items-center text-neutral-400 [&_svg]:size-4 data-[state=on]:text-blue-500"
   >
     {#if value.direction === "horizontal"}
       <AlignStartHorizontalIcon />
@@ -75,7 +75,7 @@
   </ToggleGroup.Item>
   <ToggleGroup.Item
     value="center-start"
-    class="rounded-md cursor-pointer border border-transparent h-8 flex justify-center items-center text-neutral-400 [&_svg]:size-4 data-[state=on]:text-blue-500"
+    class="rounded-md cursor-pointer border border-transparent h-7 flex justify-center items-center text-neutral-400 [&_svg]:size-4 data-[state=on]:text-blue-500"
   >
     {#if value.direction === "horizontal"}
       <DotIcon />
@@ -85,7 +85,7 @@
   </ToggleGroup.Item>
   <ToggleGroup.Item
     value="end-start"
-    class="rounded-md cursor-pointer border border-transparent h-8 flex justify-center items-center text-neutral-400 [&_svg]:size-4 data-[state=on]:text-blue-500"
+    class="rounded-md cursor-pointer border border-transparent h-7 flex justify-center items-center text-neutral-400 [&_svg]:size-4 data-[state=on]:text-blue-500"
   >
     {#if value.direction === "horizontal"}
       <DotIcon />
@@ -95,7 +95,7 @@
   </ToggleGroup.Item>
   <ToggleGroup.Item
     value="start-center"
-    class="rounded-md cursor-pointer border border-transparent h-8 flex justify-center items-center text-neutral-400 [&_svg]:size-4 data-[state=on]:text-blue-500"
+    class="rounded-md cursor-pointer border border-transparent h-7 flex justify-center items-center text-neutral-400 [&_svg]:size-4 data-[state=on]:text-blue-500"
   >
     {#if value.direction === "horizontal"}
       <AlignCenterHorizontalIcon />
@@ -105,17 +105,17 @@
   </ToggleGroup.Item>
   <ToggleGroup.Item
     value="center-center"
-    class="rounded-md cursor-pointer border border-transparent h-8 flex justify-center items-center text-neutral-400 [&_svg]:size-4 data-[state=on]:text-blue-500"
+    class="rounded-md cursor-pointer border border-transparent h-7 flex justify-center items-center text-neutral-400 [&_svg]:size-4 data-[state=on]:text-blue-500"
     ><DotIcon /></ToggleGroup.Item
   >
   <ToggleGroup.Item
     value="end-center"
-    class="rounded-md cursor-pointer border border-transparent h-8 flex justify-center items-center text-neutral-400 [&_svg]:size-4 data-[state=on]:text-blue-500"
+    class="rounded-md cursor-pointer border border-transparent h-7 flex justify-center items-center text-neutral-400 [&_svg]:size-4 data-[state=on]:text-blue-500"
     ><DotIcon /></ToggleGroup.Item
   >
   <ToggleGroup.Item
     value="start-end"
-    class="rounded-md cursor-pointer border border-transparent h-8 flex justify-center items-center text-neutral-400 [&_svg]:size-4 data-[state=on]:text-blue-500"
+    class="rounded-md cursor-pointer border border-transparent h-7 flex justify-center items-center text-neutral-400 [&_svg]:size-4 data-[state=on]:text-blue-500"
   >
     {#if value.direction === "horizontal"}
       <AlignEndHorizontalIcon />
@@ -125,12 +125,12 @@
   </ToggleGroup.Item>
   <ToggleGroup.Item
     value="center-end"
-    class="rounded-md cursor-pointer border border-transparent h-8 flex justify-center items-center text-neutral-400 [&_svg]:size-4 data-[state=on]:text-blue-500"
+    class="rounded-md cursor-pointer border border-transparent h-7 flex justify-center items-center text-neutral-400 [&_svg]:size-4 data-[state=on]:text-blue-500"
     ><DotIcon /></ToggleGroup.Item
   >
   <ToggleGroup.Item
     value="end-end"
-    class="rounded-md cursor-pointer border border-transparent h-8 flex justify-center items-center text-neutral-400 [&_svg]:size-4 data-[state=on]:text-blue-500"
+    class="rounded-md cursor-pointer border border-transparent h-7 flex justify-center items-center text-neutral-400 [&_svg]:size-4 data-[state=on]:text-blue-500"
     ><DotIcon /></ToggleGroup.Item
   >
 </ToggleGroup.Root>

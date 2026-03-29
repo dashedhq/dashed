@@ -39,7 +39,7 @@
 </script>
 
 <div
-  class="text-neutral-50 text-sm border border-neutral-700 rounded-md px-2 h-8 flex items-center gap-2 focus-within:border-blue-500"
+  class="text-neutral-50 text-sm border border-neutral-700 rounded-md px-2 h-7 flex items-center gap-2 focus-within:border-blue-500"
 >
   <div class="text-neutral-400">{notation}</div>
   <input
@@ -74,7 +74,7 @@
     </Select.Trigger>
     <Select.Portal>
       <Select.Content
-        class="rounded-lg shadow-md bg-neutral-800 border border-neutral-700 p-1"
+        class="rounded-lg shadow-md bg-neutral-800 border border-neutral-700 p-1 z-10"
       >
         <Select.Viewport class="flex flex-col gap-1">
           <Select.Item
