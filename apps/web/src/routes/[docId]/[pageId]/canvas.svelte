@@ -112,6 +112,18 @@
       e.preventDefault();
       spaceHeld = true;
     }
+    const focused = document.activeElement;
+    const isInput =
+      focused instanceof HTMLInputElement ||
+      focused instanceof HTMLTextAreaElement;
+    if ((e.metaKey || e.ctrlKey) && e.code === "KeyZ" && !isInput && !isTextEditing) {
+      e.preventDefault();
+      if (e.shiftKey) {
+        editor.redo();
+      } else {
+        editor.undo();
+      }
+    }
     if (
       (e.metaKey || e.ctrlKey) &&
       (e.code === "Equal" || e.code === "Minus" || e.code === "Digit0")

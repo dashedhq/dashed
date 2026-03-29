@@ -7,12 +7,12 @@
     TypographyStyle,
   } from "@dashedhq/core";
   import {
+    BaselineIcon,
     CaseSensitiveIcon,
     EyeIcon,
     FoldHorizontalIcon,
     FoldVerticalIcon,
     MoveVerticalIcon,
-    BaselineIcon,
     PlusIcon,
     RotateCwIcon,
     StrikethroughIcon,
