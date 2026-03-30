@@ -3,6 +3,7 @@
 
   import { clampMin } from "$lib/utils";
 
+  import type { Guide } from "./alignment-guides";
   import {
     type CanvasMeasurements,
     getEditorState,
@@ -17,6 +18,82 @@
 
   let { node, nodeMeasurements, canvasMeasurements }: Props = $props();
   const editor = getEditorState();
+
+  // -- Resize snap helpers --
+
+  const SNAP_THRESHOLD = 5;
+  const GUIDE_PADDING = 20;
+
+  type Rect = { x: number; y: number; width: number; height: number };
+
+  function domToDoc(r: DOMRect): Rect {
+    return {
+      x:
+        (r.x -
+          canvasMeasurements.boundingRect.x -
+          canvasMeasurements.clientLeft -
+          editor.panX) /
+        editor.zoom,
+      y:
+        (r.y -
+          canvasMeasurements.boundingRect.y -
+          canvasMeasurements.clientTop -
+          editor.panY) /
+        editor.zoom,
+      width: r.width / editor.zoom,
+      height: r.height / editor.zoom,
+    };
+  }
+
+  function findSnapEdge(
+    proposed: number,
+    edges: number[],
+  ): number | null {
+    let best: number | null = null;
+    let bestDist = SNAP_THRESHOLD + 1;
+    for (const edge of edges) {
+      const d = Math.abs(proposed - edge);
+      if (d <= SNAP_THRESHOLD && d < bestDist) {
+        best = edge;
+        bestDist = d;
+      }
+    }
+    return best;
+  }
+
+  function makeGuide(
+    axis: "x" | "y",
+    position: number,
+    nr: Rect,
+    sibRects: Rect[],
+  ): Guide {
+    if (axis === "x") {
+      let minY = nr.y;
+      let maxY = nr.y + nr.height;
+      for (const r of sibRects) {
+        if (
+          Math.abs(r.x - position) < 1 ||
+          Math.abs(r.x + r.width - position) < 1
+        ) {
+          minY = Math.min(minY, r.y);
+          maxY = Math.max(maxY, r.y + r.height);
+        }
+      }
+      return { axis, position, start: minY - GUIDE_PADDING, end: maxY + GUIDE_PADDING };
+    }
+    let minX = nr.x;
+    let maxX = nr.x + nr.width;
+    for (const r of sibRects) {
+      if (
+        Math.abs(r.y - position) < 1 ||
+        Math.abs(r.y + r.height - position) < 1
+      ) {
+        minX = Math.min(minX, r.x);
+        maxX = Math.max(maxX, r.x + r.width);
+      }
+    }
+    return { axis, position, start: minX - GUIDE_PADDING, end: maxX + GUIDE_PADDING };
+  }
 
   const overlay = $derived.by(() => ({
     x: nodeMeasurements.boundingRect.x - canvasMeasurements.boundingRect.x - canvasMeasurements.clientLeft,
@@ -38,6 +115,10 @@
     | "bottom-right";
 
   let resizeHandle = $state<ResizeHandle | null>(null);
+  let resizeSiblingIds: string[] = [];
+  let rawWidth = 0;
+  let rawHeight = 0;
+  let resizeGuides = $state<Guide[]>([]);
 
   function resizesRight(h: ResizeHandle): boolean {
     return h === "right" || h === "top-right" || h === "bottom-right";
@@ -82,6 +163,16 @@
       });
     }
 
+    // Capture raw dimensions and siblings for snap
+    rawWidth = nodeMeasurements.offsetWidth;
+    rawHeight = nodeMeasurements.offsetHeight;
+    const parent = editor.findParent(node.id);
+    if (parent && (parent.type === "frame" || parent.type === "screen")) {
+      resizeSiblingIds = parent.children.filter((id) => id !== node.id);
+    } else {
+      resizeSiblingIds = [];
+    }
+
     resizeHandle = handle;
     editor.beginPatch();
     (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
@@ -94,22 +185,80 @@
 
     const dx = e.movementX / editor.zoom;
     const dy = e.movementY / editor.zoom;
-    const { width, height } = node.dimensions;
+
+    // Track raw (unsnapped) dimensions
+    if (resizesRight(resizeHandle)) {rawWidth += dx;}
+    if (resizesLeft(resizeHandle)) {rawWidth -= dx;}
+    if (resizesBottom(resizeHandle)) {rawHeight += dy;}
+    if (resizesTop(resizeHandle)) {rawHeight -= dy;}
+
+    let snappedWidth = rawWidth;
+    let snappedHeight = rawHeight;
+    const newGuides: Guide[] = [];
+
+    // Snap against sibling edges
+    if (resizeSiblingIds.length > 0) {
+      const nodeEl = document.querySelector(
+        `[data-id="${node.id}"]`,
+      ) as HTMLElement | null;
+      if (nodeEl) {
+        const nr = domToDoc(nodeEl.getBoundingClientRect());
+        const sibRects: Rect[] = [];
+        const sibXEdges: number[] = [];
+        const sibYEdges: number[] = [];
+
+        for (const id of resizeSiblingIds) {
+          const el = document.querySelector(
+            `[data-id="${id}"]`,
+          ) as HTMLElement | null;
+          if (!el) {continue;}
+          const r = domToDoc(el.getBoundingClientRect());
+          sibRects.push(r);
+          sibXEdges.push(r.x, r.x + r.width);
+          sibYEdges.push(r.y, r.y + r.height);
+        }
+
+        if (resizesRight(resizeHandle)) {
+          const snap = findSnapEdge(nr.x + rawWidth, sibXEdges);
+          if (snap) {
+            snappedWidth = snap - nr.x;
+            newGuides.push(makeGuide("x", snap, nr, sibRects));
+          }
+        } else if (resizesLeft(resizeHandle)) {
+          const anchorRight = nr.x + nr.width;
+          const snap = findSnapEdge(anchorRight - rawWidth, sibXEdges);
+          if (snap) {
+            snappedWidth = anchorRight - snap;
+            newGuides.push(makeGuide("x", snap, nr, sibRects));
+          }
+        }
+
+        if (resizesBottom(resizeHandle)) {
+          const snap = findSnapEdge(nr.y + rawHeight, sibYEdges);
+          if (snap) {
+            snappedHeight = snap - nr.y;
+            newGuides.push(makeGuide("y", snap, nr, sibRects));
+          }
+        } else if (resizesTop(resizeHandle)) {
+          const anchorBottom = nr.y + nr.height;
+          const snap = findSnapEdge(anchorBottom - rawHeight, sibYEdges);
+          if (snap) {
+            snappedHeight = anchorBottom - snap;
+            newGuides.push(makeGuide("y", snap, nr, sibRects));
+          }
+        }
+      }
+    }
+
+    resizeGuides = newGuides;
+
     const size: { width?: Size; height?: Size } = {};
-
-    if (resizesRight(resizeHandle) && width.type === "fixed") {
-      size.width = { type: "fixed", value: clampMin(width.value + dx, 1) };
+    if (resizesX(resizeHandle)) {
+      size.width = { type: "fixed", value: clampMin(snappedWidth, 1) };
     }
-    if (resizesLeft(resizeHandle) && width.type === "fixed") {
-      size.width = { type: "fixed", value: clampMin(width.value - dx, 1) };
+    if (resizesY(resizeHandle)) {
+      size.height = { type: "fixed", value: clampMin(snappedHeight, 1) };
     }
-    if (resizesBottom(resizeHandle) && height.type === "fixed") {
-      size.height = { type: "fixed", value: clampMin(height.value + dy, 1) };
-    }
-    if (resizesTop(resizeHandle) && height.type === "fixed") {
-      size.height = { type: "fixed", value: clampMin(height.value - dy, 1) };
-    }
-
     editor.resizeNode(node.id, size);
   }
 
@@ -118,6 +267,8 @@
       return;
     }
     resizeHandle = null;
+    resizeGuides = [];
+    resizeSiblingIds = [];
     editor.commitPatch();
     (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId);
   }
@@ -229,4 +380,32 @@
       onpointerup={handleResizeEnd}
     ></button>
   {/each}
+{/if}
+
+{#if resizeGuides.length > 0}
+  <svg class="absolute inset-0 pointer-events-none z-40 overflow-visible">
+    {#each resizeGuides as guide, i (i)}
+      {#if guide.axis === "x"}
+        <line
+          x1={guide.position * editor.zoom + editor.panX}
+          y1={guide.start * editor.zoom + editor.panY}
+          x2={guide.position * editor.zoom + editor.panX}
+          y2={guide.end * editor.zoom + editor.panY}
+          stroke="#f43f5e"
+          stroke-width="1"
+          stroke-dasharray="4 4"
+        />
+      {:else}
+        <line
+          x1={guide.start * editor.zoom + editor.panX}
+          y1={guide.position * editor.zoom + editor.panY}
+          x2={guide.end * editor.zoom + editor.panX}
+          y2={guide.position * editor.zoom + editor.panY}
+          stroke="#f43f5e"
+          stroke-width="1"
+          stroke-dasharray="4 4"
+        />
+      {/if}
+    {/each}
+  </svg>
 {/if}

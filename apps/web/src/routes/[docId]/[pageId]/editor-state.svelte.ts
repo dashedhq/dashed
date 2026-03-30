@@ -122,6 +122,7 @@ export class EditorState {
       this.#panX;
       this.#panY;
       this.#zoom;
+      this.selectedNode;
       /* eslint-enable @typescript-eslint/no-unused-expressions */
       this.#measureNode();
     });
@@ -372,7 +373,7 @@ export class EditorState {
     this.#setSelection(null);
   }
 
-  #findParent(nodeId: string): Node | null {
+  findParent(nodeId: string): Node | null {
     for (const node of this.#nodes.values()) {
       if (
         (node.type === "frame" || node.type === "screen") &&
@@ -407,7 +408,7 @@ export class EditorState {
       return;
     }
 
-    const parent = this.#findParent(id);
+    const parent = this.findParent(id);
     if (!parent) {
       return;
     }
